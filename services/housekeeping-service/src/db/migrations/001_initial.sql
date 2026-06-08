@@ -1,13 +1,22 @@
-CREATE TYPE IF NOT EXISTS hk_task_type AS ENUM (
-    'departure_clean', 'stay_over_clean', 'turn_down', 'inspection',
-    'deep_clean', 'maintenance_prep', 'amenity_restock'
-);
+DO $$ BEGIN
+    CREATE TYPE hk_task_type AS ENUM (
+        'departure_clean', 'stay_over_clean', 'turn_down', 'inspection',
+        'deep_clean', 'maintenance_prep', 'amenity_restock'
+    );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE TYPE IF NOT EXISTS hk_task_status AS ENUM (
-    'pending', 'assigned', 'in_progress', 'completed', 'skipped'
-);
+DO $$ BEGIN
+    CREATE TYPE hk_task_status AS ENUM (
+        'pending', 'assigned', 'in_progress', 'completed', 'skipped'
+    );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE TYPE IF NOT EXISTS hk_staff_status AS ENUM ('available', 'busy', 'off_duty');
+DO $$ BEGIN
+    CREATE TYPE hk_staff_status AS ENUM ('available', 'busy', 'off_duty');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 CREATE TABLE IF NOT EXISTS hk_staff (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),

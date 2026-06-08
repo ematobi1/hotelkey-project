@@ -1,7 +1,14 @@
-CREATE TYPE IF NOT EXISTS folio_status AS ENUM ('open', 'closed', 'disputed');
-CREATE TYPE IF NOT EXISTS payment_status AS ENUM (
-    'pending', 'authorized', 'captured', 'refunded', 'failed', 'cancelled'
-);
+DO $$ BEGIN
+    CREATE TYPE folio_status AS ENUM ('open', 'closed', 'disputed');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE payment_status AS ENUM (
+        'pending', 'authorized', 'captured', 'refunded', 'failed', 'cancelled'
+    );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 CREATE TABLE IF NOT EXISTS folio (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),

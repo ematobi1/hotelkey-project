@@ -1,6 +1,9 @@
-CREATE TYPE IF NOT EXISTS room_status AS ENUM (
-    'clean', 'dirty', 'occupied', 'inspecting', 'maintenance', 'out_of_order'
-);
+DO $$ BEGIN
+    CREATE TYPE room_status AS ENUM (
+        'clean', 'dirty', 'occupied', 'inspecting', 'maintenance', 'out_of_order'
+    );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 CREATE TABLE IF NOT EXISTS room_type (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
