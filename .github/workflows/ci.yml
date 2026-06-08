@@ -1,0 +1,121 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    name: Build, Typecheck & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: |
+          pnpm --filter "@hotel-key/types" \
+               --filter "@hotel-key/config" \
+               --filter "@hotel-key/logger" \
+               --filter "@hotel-key/kafka" \
+               build
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test
+
+  integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: ci
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: |
+          pnpm --filter "@hotel-key/types" \
+               --filter "@hotel-key/config" \
+               --filter "@hotel-key/logger" \
+               --filter "@hotel-key/kafka" \
+               build
+
+      - name: Run integration tests (all services with real DB)
+        run: pnpm --filter "./services/*" test:integration
+        env:
+          DOCKER_HOST: unix:///var/run/docker.sock
+
+  coverage:
+    name: Coverage Report
+    runs-on: ubuntu-latest
+    needs: ci
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: |
+          pnpm --filter "@hotel-key/types" \
+               --filter "@hotel-key/config" \
+               --filter "@hotel-key/logger" \
+               --filter "@hotel-key/kafka" \
+               build
+
+      - name: Run tests with coverage
+        run: pnpm --filter "./services/*" test -- --coverage
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: services/*/coverage/
+          retention-days: 14

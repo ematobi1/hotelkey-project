@@ -19,6 +19,48 @@ async function getService() {
 }
 
 export const billingRoutes: FastifyPluginAsync = async (app) => {
+  app.post<{
+    Body: { reservationId: string; guestId: string; tenantId: string }
+  }>(
+    '/folios',
+    {
+      schema: {
+        body: {
+          type: 'object',
+          required: ['reservationId', 'guestId', 'tenantId'],
+          properties: {
+            reservationId: { type: 'string', format: 'uuid' },
+            guestId: { type: 'string', format: 'uuid' },
+            tenantId: { type: 'string', format: 'uuid' },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const svc = await getService()
+      const folio = await svc.createFolio(
+        request.body.reservationId,
+        request.body.guestId,
+        request.body.tenantId,
+      )
+      return reply.status(201).send({ data: folio })
+    },
+  )
+
+  app.post<{ Params: { reservationId: string } }>(
+    '/folios/:reservationId/close',
+    {
+      schema: {
+        params: { type: 'object', properties: { reservationId: { type: 'string', format: 'uuid' } }, required: ['reservationId'] },
+      },
+    },
+    async (request, reply) => {
+      const svc = await getService()
+      const folio = await svc.closeFolioForCheckout(request.params.reservationId)
+      return reply.send({ data: folio })
+    },
+  )
+
   app.get<{ Params: { reservationId: string } }>(
     '/folios/:reservationId',
     async (request, reply) => {

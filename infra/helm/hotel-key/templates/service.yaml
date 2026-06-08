@@ -1,0 +1,18 @@
+{{- range $key, $svc := .Values.services }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $svc.name }}
+  namespace: {{ $.Values.global.namespace }}
+  labels:
+    {{- include "hotel-key.labels" $ | nindent 4 }}
+    app: {{ $svc.name }}
+spec:
+  selector:
+    app: {{ $svc.name }}
+  ports:
+    - port: {{ $svc.port }}
+      targetPort: {{ $svc.port }}
+      name: http
+{{- end }}

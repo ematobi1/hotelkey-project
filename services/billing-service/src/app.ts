@@ -8,6 +8,7 @@ import { createLogger } from '@hotel-key/logger'
 import { AppError } from '@hotel-key/types'
 import { config } from './config'
 import { billingRoutes } from './routes/billing.routes'
+import { webhookRoutes } from './routes/webhook.routes'
 
 export async function createApp(): Promise<FastifyInstance> {
   const logger = createLogger({ service: 'billing-service', level: config.LOG_LEVEL })
@@ -30,6 +31,7 @@ export async function createApp(): Promise<FastifyInstance> {
     return reply.status(500).send({ error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' } })
   })
 
+  await app.register(webhookRoutes)
   app.get('/health', async () => ({ status: 'ok', service: 'billing-service' }))
   await app.register(billingRoutes, { prefix: '/v1' })
 

@@ -19,6 +19,10 @@ export class BillingService {
     this.stripe = new Stripe(stripeSecretKey, { apiVersion: '2024-04-10' })
   }
 
+  async createFolio(reservationId: string, guestId: string, tenantId: string): Promise<Folio> {
+    return this.folioRepo.createForReservation(reservationId, guestId, tenantId)
+  }
+
   async getFolioByReservation(
     reservationId: string,
   ): Promise<{ folio: Folio; lineItems: FolioLineItem[] }> {

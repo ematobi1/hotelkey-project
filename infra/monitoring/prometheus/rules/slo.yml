@@ -1,0 +1,53 @@
+groups:
+  - name: hotel_key_slo
+    interval: 30s
+    rules:
+      # Availability SLO: 99.9% of requests must succeed (status < 500)
+      - record: job:http_requests_total:rate5m
+        expr: sum(rate(http_requests_total[5m])) by (job)
+
+      - record: job:http_errors_total:rate5m
+        expr: sum(rate(http_requests_total{status=~"5.."}[5m])) by (job)
+
+      - record: job:http_availability:rate5m
+        expr: 1 - (job:http_errors_total:rate5m / job:http_requests_total:rate5m)
+
+      # Error budget burn rate alerts (multi-window)
+      # 14.4x burn rate exhausts monthly budget in ~50 minutes
+      - alert: SLOErrorBudgetBurnRateFast
+        expr: |
+          (
+            job:http_errors_total:rate5m / job:http_requests_total:rate5m > 0.001 * 14.4
+          )
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Error budget burning too fast ({{ $labels.job }})"
+          description: "Error rate is {{ $value | humanizePercentage }} — 14.4x burn rate. Will exhaust monthly budget in ~50 minutes."
+
+      # 6x burn rate — elevated but not immediately critical
+      - alert: SLOErrorBudgetBurnRateSlow
+        expr: |
+          (
+            job:http_errors_total:rate5m / job:http_requests_total:rate5m > 0.001 * 6
+          )
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Error budget burn rate elevated ({{ $labels.job }})"
+          description: "Error rate is {{ $value | humanizePercentage }} — 6x burn rate."
+
+      # Latency SLO: p99 < 500ms
+      - alert: HighP99Latency
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(http_request_duration_ms_bucket[5m])) by (job, le)
+          ) > 500
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "p99 latency above 500ms ({{ $labels.job }})"
+          description: "p99 latency is {{ $value }}ms"

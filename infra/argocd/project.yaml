@@ -1,0 +1,15 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: hotel-key
+  namespace: argocd
+spec:
+  description: Hotel Key PMS
+  sourceRepos:
+    - 'https://github.com/hotel-key/hotel-key'
+  destinations:
+    - namespace: hotel-key
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'

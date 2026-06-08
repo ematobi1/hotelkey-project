@@ -5,3 +5,5 @@ CREATE DATABASE hotel_key_reservation;
 CREATE DATABASE hotel_key_billing;
 CREATE DATABASE hotel_key_housekeeping;
 CREATE DATABASE hotel_key_notification;
+CREATE DATABASE hotel_key_pms;
+CREATE DATABASE hotel_key_maintenance;

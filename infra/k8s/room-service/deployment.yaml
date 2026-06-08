@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: room-service
+  namespace: hotel-key
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: room-service
+  template:
+    metadata:
+      labels:
+        app: room-service
+        version: v1
+    spec:
+      serviceAccountName: room-service
+      containers:
+        - name: room-service
+          image: hotel-key/room-service:latest
+          ports:
+            - containerPort: 3003
+          envFrom:
+            - secretRef:
+                name: room-service-secrets
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: PORT
+              value: "3003"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3003
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3003
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+      terminationGracePeriodSeconds: 30

@@ -1,3 +1,4 @@
+import './tracing' // must be first — starts OTel SDK before anything else loads
 import { createApp } from './app'
 import { config } from './config'
 import { getPool, getMongoDB, closeConnections } from './db/client'

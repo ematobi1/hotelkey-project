@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: housekeeping-service
+  namespace: hotel-key
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: housekeeping-service
+  template:
+    metadata:
+      labels:
+        app: housekeeping-service
+        version: v1
+    spec:
+      serviceAccountName: housekeeping-service
+      containers:
+        - name: housekeeping-service
+          image: hotel-key/housekeeping-service:latest
+          ports:
+            - containerPort: 3006
+          envFrom:
+            - secretRef:
+                name: housekeeping-service-secrets
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: PORT
+              value: "3006"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3006
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3006
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+      terminationGracePeriodSeconds: 30

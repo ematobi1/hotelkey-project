@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: hotel-key
+  namespace: argocd
+spec:
+  project: hotel-key
+  source:
+    repoURL: https://github.com/hotel-key/hotel-key
+    targetRevision: HEAD
+    path: infra/helm/hotel-key
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: hotel-key
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

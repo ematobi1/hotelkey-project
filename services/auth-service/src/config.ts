@@ -8,6 +8,7 @@ const schema = baseEnvSchema.extend({
   JWT_ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().default(900),
   JWT_REFRESH_TOKEN_TTL_DAYS: z.coerce.number().default(7),
   MFA_ENCRYPTION_KEY: z.string().length(64, 'Must be 32-byte hex (64 chars)'),
+  KAFKA_BROKERS: z.string().default('localhost:9094'),
 })
 
 export const config = parseEnv(schema)
