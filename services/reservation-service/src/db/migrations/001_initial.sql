@@ -1,6 +1,9 @@
-CREATE TYPE IF NOT EXISTS reservation_status AS ENUM (
-    'tentative', 'confirmed', 'checked_in', 'checked_out', 'cancelled', 'no_show'
-);
+DO $$ BEGIN
+    CREATE TYPE reservation_status AS ENUM (
+        'tentative', 'confirmed', 'checked_in', 'checked_out', 'cancelled', 'no_show'
+    );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 CREATE TABLE IF NOT EXISTS rate_plan (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
