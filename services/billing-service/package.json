@@ -8,9 +8,15 @@
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@opentelemetry/auto-instrumentations-node": "^0.47.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.52.0",
+    "@opentelemetry/resources": "^1.25.0",
+    "@opentelemetry/sdk-node": "^0.52.0",
+    "@opentelemetry/semantic-conventions": "^1.25.0",
     "@fastify/cors": "^9.0.0",
     "@fastify/helmet": "^11.0.0",
     "@fastify/rate-limit": "^9.0.0",
@@ -27,8 +33,10 @@
     "zod": "^3.23.0"
   },
   "devDependencies": {
+    "@testcontainers/postgresql": "^10.0.0",
     "@types/node": "^20.12.0",
     "@types/pg": "^8.11.5",
+    "testcontainers": "^10.0.0",
     "tsup": "^8.0.0",
     "tsx": "^4.11.0",
     "typescript": "^5.4.5",

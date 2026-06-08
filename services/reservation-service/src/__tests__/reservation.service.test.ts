@@ -49,6 +49,7 @@ describe('ReservationService.getAvailability', () => {
         tenantId: 'tenant-1',
         checkInDate: new Date('2026-07-05'),
         checkOutDate: new Date('2026-07-01'),
+        adults: 2,
         roomTypeId: undefined,
       }),
     ).rejects.toThrow(BadRequestError)
@@ -58,7 +59,7 @@ describe('ReservationService.getAvailability', () => {
     const svc = new ReservationService(makeReservationRepo() as any, makeProducer() as any, makeRedlock() as any)
     const same = new Date('2026-07-01')
     await expect(
-      svc.getAvailability({ tenantId: 'tenant-1', checkInDate: same, checkOutDate: same }),
+      svc.getAvailability({ tenantId: 'tenant-1', checkInDate: same, checkOutDate: same, adults: 2 }),
     ).rejects.toThrow(BadRequestError)
   })
 
@@ -69,6 +70,7 @@ describe('ReservationService.getAvailability', () => {
       tenantId: 'tenant-1',
       checkInDate: new Date('2026-07-01'),
       checkOutDate: new Date('2026-07-05'),
+      adults: 2,
     })
     expect(repo.findAvailableRooms).toHaveBeenCalledOnce()
   })

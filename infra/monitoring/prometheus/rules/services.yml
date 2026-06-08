@@ -1,0 +1,29 @@
+groups:
+  - name: hotel_key_services
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service is down: {{ $labels.job }}"
+          description: "{{ $labels.job }} at {{ $labels.instance }} has been down for 30 seconds."
+
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes > 512 * 1024 * 1024
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage ({{ $labels.job }})"
+          description: "Memory: {{ $value | humanize1024 }}B"
+
+      - alert: KafkaConsumerLag
+        expr: kafka_consumer_lag_sum > 1000
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High Kafka consumer lag"
+          description: "Consumer group {{ $labels.group }} lag: {{ $value }}"

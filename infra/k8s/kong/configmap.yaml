@@ -1,0 +1,92 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kong-config
+  namespace: hotel-key
+data:
+  kong.yml: |
+    _format_version: "3.0"
+    _transform: true
+
+    services:
+      - name: auth-service
+        url: http://auth-service:3001
+        routes:
+          - name: auth-routes
+            paths:
+              - /v1/auth
+            strip_path: false
+        plugins:
+          - name: rate-limiting
+            config:
+              minute: 60
+              policy: local
+
+      - name: guest-service
+        url: http://guest-service:3002
+        routes:
+          - name: guest-routes
+            paths:
+              - /v1/guests
+            strip_path: false
+
+      - name: room-service
+        url: http://room-service:3003
+        routes:
+          - name: room-routes
+            paths:
+              - /v1/rooms
+            strip_path: false
+
+      - name: reservation-service
+        url: http://reservation-service:3004
+        routes:
+          - name: reservation-routes
+            paths:
+              - /v1/reservations
+            strip_path: false
+
+      - name: billing-service
+        url: http://billing-service:3005
+        routes:
+          - name: billing-routes
+            paths:
+              - /v1/billing
+            strip_path: false
+
+      - name: housekeeping-service
+        url: http://housekeeping-service:3006
+        routes:
+          - name: housekeeping-routes
+            paths:
+              - /v1/housekeeping
+            strip_path: false
+
+      - name: notification-service
+        url: http://notification-service:3007
+        routes:
+          - name: notification-routes
+            paths:
+              - /v1/notifications
+            strip_path: false
+
+      - name: pms-service
+        url: http://pms-service:3008
+        routes:
+          - name: pms-routes
+            paths:
+              - /v1/pms
+            strip_path: false
+
+      - name: maintenance-service
+        url: http://maintenance-service:3009
+        routes:
+          - name: maintenance-routes
+            paths:
+              - /v1/maintenance
+            strip_path: false
+
+    plugins:
+      - name: jwt
+        config:
+          secret_is_base64: false

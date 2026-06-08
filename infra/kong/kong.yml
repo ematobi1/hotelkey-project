@@ -1,0 +1,147 @@
+_format_version: "3.0"
+_transform: true
+
+# Global plugins — applied to all traffic through Kong
+plugins:
+  - name: rate-limiting
+    config:
+      minute: 100
+      policy: local
+
+  - name: correlation-id
+    config:
+      header_name: X-Correlation-ID
+      generator: uuid#counter
+      echo_downstream: true
+
+  - name: request-size-limiting
+    config:
+      allowed_payload_size: 10
+
+services:
+  # ---------------------------------------------------------------------------
+  # auth-service  (port 3001)
+  # JWT validation is handled by the service itself; Kong provides routing only
+  # ---------------------------------------------------------------------------
+  - name: auth-service
+    url: http://host.docker.internal:3001
+    routes:
+      - name: auth-routes
+        paths:
+          - /v1/auth
+        strip_path: false
+        protocols:
+          - http
+          - https
+
+  # ---------------------------------------------------------------------------
+  # guest-service  (port 3002)
+  # ---------------------------------------------------------------------------
+  - name: guest-service
+    url: http://host.docker.internal:3002
+    routes:
+      - name: guest-routes
+        paths:
+          - /v1/guests
+        strip_path: false
+        protocols:
+          - http
+          - https
+
+  # ---------------------------------------------------------------------------
+  # room-service  (port 3003)
+  # ---------------------------------------------------------------------------
+  - name: room-service
+    url: http://host.docker.internal:3003
+    routes:
+      - name: room-routes
+        paths:
+          - /v1/rooms
+        strip_path: false
+        protocols:
+          - http
+          - https
+
+  # ---------------------------------------------------------------------------
+  # reservation-service  (port 3004)
+  # ---------------------------------------------------------------------------
+  - name: reservation-service
+    url: http://host.docker.internal:3004
+    routes:
+      - name: reservation-routes
+        paths:
+          - /v1/reservations
+        strip_path: false
+        protocols:
+          - http
+          - https
+
+  # ---------------------------------------------------------------------------
+  # billing-service  (port 3005)
+  # ---------------------------------------------------------------------------
+  - name: billing-service
+    url: http://host.docker.internal:3005
+    routes:
+      - name: billing-routes
+        paths:
+          - /v1/billing
+        strip_path: false
+        protocols:
+          - http
+          - https
+
+  # ---------------------------------------------------------------------------
+  # housekeeping-service  (port 3006)
+  # ---------------------------------------------------------------------------
+  - name: housekeeping-service
+    url: http://host.docker.internal:3006
+    routes:
+      - name: housekeeping-routes
+        paths:
+          - /v1/housekeeping
+        strip_path: false
+        protocols:
+          - http
+          - https
+
+  # ---------------------------------------------------------------------------
+  # notification-service  (port 3007)
+  # ---------------------------------------------------------------------------
+  - name: notification-service
+    url: http://host.docker.internal:3007
+    routes:
+      - name: notification-routes
+        paths:
+          - /v1/notifications
+        strip_path: false
+        protocols:
+          - http
+          - https
+
+  # ---------------------------------------------------------------------------
+  # pms-service  (port 3008)
+  # ---------------------------------------------------------------------------
+  - name: pms-service
+    url: http://host.docker.internal:3008
+    routes:
+      - name: pms-routes
+        paths:
+          - /v1/pms
+        strip_path: false
+        protocols:
+          - http
+          - https
+
+  # ---------------------------------------------------------------------------
+  # maintenance-service  (port 3009)
+  # ---------------------------------------------------------------------------
+  - name: maintenance-service
+    url: http://host.docker.internal:3009
+    routes:
+      - name: maintenance-routes
+        paths:
+          - /v1/maintenance
+        strip_path: false
+        protocols:
+          - http
+          - https

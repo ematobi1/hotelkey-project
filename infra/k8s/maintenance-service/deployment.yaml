@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: maintenance-service
+  namespace: hotel-key
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: maintenance-service
+  template:
+    metadata:
+      labels:
+        app: maintenance-service
+        version: v1
+    spec:
+      serviceAccountName: maintenance-service
+      containers:
+        - name: maintenance-service
+          image: hotel-key/maintenance-service:latest
+          ports:
+            - containerPort: 3009
+          envFrom:
+            - secretRef:
+                name: maintenance-service-secrets
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: PORT
+              value: "3009"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3009
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3009
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+      terminationGracePeriodSeconds: 30

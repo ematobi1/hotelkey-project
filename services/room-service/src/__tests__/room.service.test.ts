@@ -9,7 +9,7 @@ vi.mock('@hotel-key/kafka', () => ({
 const makeRoom = (overrides = {}) => ({
   id: 'room-1',
   tenantId: 'tenant-1',
-  number: '101',
+  roomNumber: '101',
   floor: 1,
   roomTypeId: 'rt-1',
   status: 'clean' as const,
@@ -48,7 +48,7 @@ describe('RoomService.createRoom', () => {
     const roomRepo = makeRoomRepo({ findRoomTypeById: vi.fn().mockResolvedValue(null) })
     const svc = new RoomService(roomRepo as any, makeProducer() as any)
     await expect(
-      svc.createRoom({ tenantId: 'tenant-1', roomTypeId: 'missing', number: '101', floor: 1 }),
+      svc.createRoom({ tenantId: 'tenant-1', roomTypeId: 'missing', roomNumber: '101', floor: 1, maxOccupancy: 2 }),
     ).rejects.toThrow(ConflictError)
   })
 
@@ -58,8 +58,9 @@ describe('RoomService.createRoom', () => {
     const result = await svc.createRoom({
       tenantId: 'tenant-1',
       roomTypeId: 'rt-1',
-      number: '101',
+      roomNumber: '101',
       floor: 1,
+      maxOccupancy: 2,
     })
     expect(result.id).toBe('room-1')
   })

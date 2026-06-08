@@ -28,7 +28,7 @@ const makeLineItem = (overrides = {}) => ({
   id: 'li-1',
   folioId: 'folio-1',
   tenantId: 'tenant-1',
-  chargeType: 'room_rate' as const,
+  chargeType: 'accommodation' as const,
   description: 'Room charge',
   quantity: 1,
   unitAmount: 100,
@@ -83,13 +83,13 @@ describe('BillingService.postCharge', () => {
       findByIdOrThrow: vi.fn().mockResolvedValue(makeFolio({ status: 'closed' })),
     })
     await expect(
-      svc.postCharge({ folioId: 'folio-1', tenantId: 'tenant-1', chargeType: 'room_rate', description: 'Test', quantity: 1, unitAmount: 100, currencyCode: 'USD' }),
+      svc.postCharge({ folioId: 'folio-1', tenantId: 'tenant-1', chargeType: 'accommodation', description: 'Test', quantity: 1, unitAmount: 100 }),
     ).rejects.toThrow(ConflictError)
   })
 
   it('posts charge and publishes event on open folio', async () => {
     const { svc, producer } = buildService()
-    await svc.postCharge({ folioId: 'folio-1', tenantId: 'tenant-1', chargeType: 'room_rate', description: 'Room', quantity: 1, unitAmount: 100, currencyCode: 'USD' })
+    await svc.postCharge({ folioId: 'folio-1', tenantId: 'tenant-1', chargeType: 'accommodation', description: 'Room', quantity: 1, unitAmount: 100 })
     expect(producer.publish).toHaveBeenCalledOnce()
   })
 })
