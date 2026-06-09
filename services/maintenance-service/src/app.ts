@@ -6,8 +6,13 @@ import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
 import { createLogger } from '@hotel-key/logger'
 import { AppError } from '@hotel-key/types'
+import { createKafkaClient, createProducer } from '@hotel-key/kafka'
 import { config } from './config'
 import { maintenanceRoutes } from './routes/maintenance.routes'
+import { MaintenanceService } from './services/maintenance.service'
+import { WorkOrderRepository } from './repositories/work-order.repository'
+import { getPool } from './db/client'
+import { runFailurePredictionJob } from './jobs/failure-prediction.job'
 
 export async function createApp(): Promise<FastifyInstance> {
   const logger = createLogger({ service: 'maintenance-service', level: config.LOG_LEVEL })
@@ -52,6 +57,25 @@ export async function createApp(): Promise<FastifyInstance> {
   app.get('/health', async () => ({ status: 'ok', service: 'maintenance-service' }))
 
   await app.register(maintenanceRoutes, { prefix: '/v1/maintenance' })
+
+  app.addHook('onReady', async () => {
+    const jobLogger = createLogger({ service: 'maintenance-service', level: config.LOG_LEVEL })
+    const kafka = createKafkaClient({
+      clientId: 'maintenance-service-job',
+      brokers: config.KAFKA_BROKERS.split(','),
+    })
+    const producer = await createProducer(kafka)
+    const jobService = new MaintenanceService(new WorkOrderRepository(getPool()), producer)
+
+    runFailurePredictionJob(jobService, jobLogger).catch((err) =>
+      jobLogger.error({ err }, 'Failure prediction job error on startup'),
+    )
+    setInterval(() => {
+      runFailurePredictionJob(jobService, jobLogger).catch((err) =>
+        jobLogger.error({ err }, 'Failure prediction job error'),
+      )
+    }, 86_400_000)
+  })
 
   return app
 }

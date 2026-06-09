@@ -1,0 +1,6 @@
+asyncpg==0.29.0
+clickhouse-driver==0.2.7
+pandas==2.2.0
+feast==0.38.0
+mlflow==2.12.2
+pyarrow==15.0.0
