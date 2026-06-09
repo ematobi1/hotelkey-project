@@ -137,6 +137,48 @@ export const reservationRoutes: FastifyPluginAsync = async (app) => {
     },
   )
 
+  app.patch<{
+    Params: { id: string }
+    Body: {
+      tenantId: string
+      checkInDate?: string
+      checkOutDate?: string
+      adults?: number
+      children?: number
+      specialRequests?: string
+      internalNotes?: string
+    }
+  }>(
+    '/:id',
+    {
+      schema: {
+        body: {
+          type: 'object',
+          required: ['tenantId'],
+          properties: {
+            tenantId: { type: 'string', format: 'uuid' },
+            checkInDate: { type: 'string', format: 'date' },
+            checkOutDate: { type: 'string', format: 'date' },
+            adults: { type: 'integer', minimum: 1 },
+            children: { type: 'integer', minimum: 0 },
+            specialRequests: { type: 'string' },
+            internalNotes: { type: 'string' },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const svc = await getService()
+      const { tenantId, checkInDate, checkOutDate, ...rest } = request.body
+      const reservation = await svc.modifyReservation(request.params.id, tenantId, {
+        ...rest,
+        checkInDate: checkInDate ? new Date(checkInDate) : undefined,
+        checkOutDate: checkOutDate ? new Date(checkOutDate) : undefined,
+      })
+      return reply.send({ data: reservation })
+    },
+  )
+
   app.delete<{ Params: { id: string }; Querystring: { tenantId: string } }>(
     '/:id',
     async (request, reply) => {

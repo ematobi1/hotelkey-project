@@ -146,6 +146,89 @@ export class ReservationService {
     return reservation
   }
 
+  async modifyReservation(
+    id: string,
+    tenantId: string,
+    changes: {
+      checkInDate?: Date
+      checkOutDate?: Date
+      adults?: number
+      children?: number
+      specialRequests?: string
+      internalNotes?: string
+    },
+  ): Promise<Reservation> {
+    const existing = await this.reservationRepo.findByIdOrThrow(id, tenantId)
+
+    if (!['tentative', 'confirmed'].includes(existing.status)) {
+      throw new ConflictError(`Reservation cannot be modified in status '${existing.status}'`)
+    }
+
+    const newCheckIn = changes.checkInDate ?? existing.checkInDate
+    const newCheckOut = changes.checkOutDate ?? existing.checkOutDate
+
+    if (newCheckIn >= newCheckOut) {
+      throw new BadRequestError('Check-out date must be after check-in date')
+    }
+
+    const datesChanged =
+      changes.checkInDate !== undefined || changes.checkOutDate !== undefined
+
+    if (datesChanged) {
+      const lockKey = `reservation:room:${existing.roomId}:${newCheckIn.toISOString()}:${newCheckOut.toISOString()}`
+      const lock = await this.redlock.acquire([lockKey], 10000).catch(() => {
+        throw new ConflictError('Room is temporarily unavailable — please try again')
+      })
+
+      try {
+        const pool = this.reservationRepo.getPool()
+        const client = await pool.connect()
+        try {
+          await client.query('BEGIN')
+
+          const conflicts = await client.query(
+            `SELECT id FROM reservation
+              WHERE room_id = $1
+                AND id != $4
+                AND status NOT IN ('cancelled', 'no_show')
+                AND check_in_date < $3
+                AND check_out_date > $2
+              FOR UPDATE SKIP LOCKED`,
+            [existing.roomId, newCheckIn, newCheckOut, id],
+          )
+
+          if (conflicts.rows.length > 0) {
+            await client.query('ROLLBACK')
+            throw new ConflictError('Room is not available for the new dates')
+          }
+
+          const nights = Math.ceil(
+            (newCheckOut.getTime() - newCheckIn.getTime()) / (1000 * 60 * 60 * 24),
+          )
+          const totalAmount = existing.ratePerNight * nights
+
+          const reservation = await this.reservationRepo.update(
+            id,
+            tenantId,
+            { ...changes, checkInDate: newCheckIn, checkOutDate: newCheckOut, totalAmount },
+            client,
+          )
+          await client.query('COMMIT')
+          return reservation
+        } catch (err) {
+          await client.query('ROLLBACK')
+          throw err
+        } finally {
+          client.release()
+        }
+      } finally {
+        await lock.release()
+      }
+    }
+
+    return this.reservationRepo.update(id, tenantId, changes)
+  }
+
   async checkOut(id: string, tenantId: string): Promise<Reservation> {
     const existing = await this.reservationRepo.findByIdOrThrow(id, tenantId)
 
