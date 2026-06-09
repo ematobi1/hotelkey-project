@@ -102,10 +102,9 @@ describe('BiService', () => {
   })
 
   it('query — handles tool error gracefully and returns partial answer', async () => {
-    // vi.spyOn tools to throw
-    const toolsMod = await import('../services/tools')
-    vi.spyOn(toolsMod, 'executeTool').mockRejectedValueOnce(new Error('ML service unavailable'))
-
+    // Simulate Claude calling a tool that returns is_error, then Claude giving a graceful answer.
+    // bi.service wraps executeTool in try/catch and sends is_error back to Claude.
+    // We test this end-to-end by using an unknown tool name so executeTool throws.
     mockCreate
       .mockResolvedValueOnce({
         stop_reason: 'tool_use',
@@ -113,8 +112,8 @@ describe('BiService', () => {
           {
             type: 'tool_use',
             id: 'tu_002',
-            name: 'get_occupancy_forecast',
-            input: { tenant_id: '00000000-0000-0000-0000-000000000001', horizon_days: 30 },
+            name: 'unknown_tool_that_does_not_exist',
+            input: { tenant_id: '00000000-0000-0000-0000-000000000001' },
           },
         ],
       })
@@ -123,7 +122,7 @@ describe('BiService', () => {
         content: [
           {
             type: 'text',
-            text: 'I was unable to retrieve a live occupancy forecast. Based on historical trends I can offer guidance.',
+            text: 'I encountered an issue retrieving the data. Based on available information I can offer guidance.',
           },
         ],
       })
@@ -135,7 +134,10 @@ describe('BiService', () => {
     )
 
     expect(result.answer).toBeTruthy()
-    expect(result.answer).toContain('unable')
+    expect(result.answer.length).toBeGreaterThan(0)
+    // toolCallsMade should be empty since the tool threw before producing a result
+    expect(result.toolCallsMade).toHaveLength(0)
+    expect(mockCreate).toHaveBeenCalledTimes(2)
     expect(mockDb.query).toHaveBeenCalledOnce()
   })
 
