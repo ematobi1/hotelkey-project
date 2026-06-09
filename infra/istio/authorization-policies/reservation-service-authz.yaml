@@ -1,0 +1,21 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: reservation-service-authz
+  namespace: hotel-key
+spec:
+  selector:
+    matchLabels:
+      app: reservation-service
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - "cluster.local/ns/hotel-key/sa/kong-serviceaccount"
+              - "cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"
+              - "cluster.local/ns/hotel-key/sa/channel-manager-service"
+      to:
+        - operation:
+            methods: ["GET", "POST", "PUT", "PATCH", "DELETE"]
+            paths: ["/v1/*", "/health"]

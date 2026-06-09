@@ -1,22 +1,33 @@
 import type { FastifyPluginAsync } from 'fastify'
 import * as argon2 from 'argon2'
 import crypto from 'crypto'
+import Redis from 'ioredis'
 import { AuthService } from '../services/auth.service'
 import { MfaService } from '../services/mfa.service'
+import { DidService } from '../services/did.service'
 import { StaffRepository } from '../repositories/staff.repository'
 import { TokenRepository } from '../repositories/token.repository'
 import { MfaRepository } from '../repositories/mfa.repository'
 import { MagicLinkRepository } from '../repositories/magic-link.repository'
+import { DidRepository } from '../repositories/did.repository'
 import { getPool } from '../db/client'
 import type { StaffRole } from '@hotel-key/types'
 import {
   MfaRequiredError,
   InvalidTokenError,
 } from '../domain/errors'
-import { verifyToken, verifyMfaPartialToken } from '../services/jwt.service'
+import { verifyToken, verifyMfaPartialToken, signGuestToken } from '../services/jwt.service'
 import { createKafkaClient, createProducer, createCloudEvent } from '@hotel-key/kafka'
 import type { HotelKeyProducer } from '@hotel-key/kafka'
 import { config } from '../config'
+
+let redisClient: Redis | null = null
+function getRedis(): Redis {
+  if (!redisClient) {
+    redisClient = new Redis(config.REDIS_URL, { lazyConnect: false, enableReadyCheck: false })
+  }
+  return redisClient
+}
 
 function buildDeps() {
   const pool = getPool()
@@ -316,6 +327,96 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
       const staff = (request as unknown as { staff: { id: string } }).staff
       await mfaService.verify(staff.id, request.body.code)
       return reply.send({ message: 'MFA enabled successfully' })
+    },
+  )
+
+  const didService = new DidService()
+  const didRepo = new DidRepository(pool)
+
+  app.post<{ Body: { tenantId: string; guestId: string } }>(
+    '/guest/did/register',
+    {
+      schema: {
+        body: {
+          type: 'object',
+          required: ['tenantId', 'guestId'],
+          properties: {
+            tenantId: { type: 'string', format: 'uuid' },
+            guestId: { type: 'string', format: 'uuid' },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { tenantId, guestId } = request.body
+
+      const existing = await didRepo.findByGuestId(guestId, tenantId)
+      if (existing) {
+        return reply.send({ data: { did: existing.did, didDocument: existing.didDocument } })
+      }
+
+      const { did, didDocument, publicKeyMultibase } = await didService.generateDid(
+        tenantId,
+        guestId,
+      )
+
+      await didRepo.create(tenantId, guestId, did, didDocument as Record<string, unknown>, publicKeyMultibase)
+
+      return reply.status(201).send({ data: { did, didDocument } })
+    },
+  )
+
+  app.post<{ Body: { did: string; challenge: string; signature: string } }>(
+    '/guest/did/authenticate',
+    {
+      schema: {
+        body: {
+          type: 'object',
+          required: ['did', 'challenge', 'signature'],
+          properties: {
+            did: { type: 'string', minLength: 1 },
+            challenge: { type: 'string', minLength: 1 },
+            signature: { type: 'string', minLength: 1 },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { did, challenge, signature } = request.body
+      const redis = getRedis()
+
+      const nonceKey = `did:nonce:${did}:${challenge}`
+      const alreadyUsed = await redis.get(nonceKey)
+      if (alreadyUsed) {
+        return reply.status(401).send({
+          error: { code: 'CHALLENGE_REPLAYED', message: 'This challenge has already been used' },
+        })
+      }
+
+      const didRecord = await didRepo.findByDid(did)
+      if (!didRecord) {
+        return reply.status(401).send({
+          error: { code: 'DID_NOT_FOUND', message: 'DID not registered' },
+        })
+      }
+
+      const valid = await didService.verifyDid(
+        did,
+        challenge,
+        signature,
+        didRecord.publicKeyMultibase,
+      )
+      if (!valid) {
+        return reply.status(401).send({
+          error: { code: 'INVALID_SIGNATURE', message: 'Signature verification failed' },
+        })
+      }
+
+      // Mark challenge as used for 5 minutes to prevent replay
+      await redis.set(nonceKey, '1', 'EX', 300)
+
+      const guestToken = await signGuestToken(didRecord.guestId, didRecord.tenantId, 'did-auth')
+      return reply.send({ guestToken })
     },
   )
 }

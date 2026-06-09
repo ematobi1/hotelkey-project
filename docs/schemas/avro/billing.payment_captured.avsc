@@ -1,0 +1,28 @@
+{
+  "type": "record",
+  "name": "BillingPaymentCaptured",
+  "namespace": "io.hotelkey.events",
+  "doc": "CloudEvents envelope for hotel-key.billing.payment_captured",
+  "fields": [
+    {"name": "specversion", "type": "string", "default": "1.0"},
+    {"name": "id", "type": "string"},
+    {"name": "source", "type": "string"},
+    {"name": "type", "type": "string", "default": "hotel-key.billing.payment_captured"},
+    {"name": "time", "type": "string"},
+    {"name": "datacontenttype", "type": "string", "default": "application/json"},
+    {"name": "tenantid", "type": "string"},
+    {
+      "name": "data",
+      "type": {
+        "type": "record",
+        "name": "BillingPaymentCapturedData",
+        "fields": [
+          {"name": "folioId", "type": "string"},
+          {"name": "paymentId", "type": "string"},
+          {"name": "amount", "type": "double"},
+          {"name": "currencyCode", "type": "string"}
+        ]
+      }
+    }
+  ]
+}

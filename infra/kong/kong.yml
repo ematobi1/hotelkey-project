@@ -18,6 +18,11 @@ plugins:
     config:
       allowed_payload_size: 10
 
+  - name: key-auth
+    config:
+      key_names: [X-API-Key]
+      hide_credentials: true
+
 services:
   # ---------------------------------------------------------------------------
   # auth-service  (port 3001)
@@ -145,3 +150,68 @@ services:
         protocols:
           - http
           - https
+
+  # ---------------------------------------------------------------------------
+  # channel-manager-service  (port 3010)
+  # ---------------------------------------------------------------------------
+  - name: channel-manager-service
+    url: http://host.docker.internal:3010
+    routes:
+      - name: channel-manager-routes
+        paths:
+          - /v1/channel-manager
+        strip_path: false
+        protocols:
+          - http
+          - https
+        plugins:
+          - name: rate-limiting
+            config:
+              hour: 1000
+              policy: local
+
+  # ---------------------------------------------------------------------------
+  # webhook-service  (port 3014)
+  # ---------------------------------------------------------------------------
+  - name: webhook-service
+    url: http://host.docker.internal:3014
+    routes:
+      - name: webhook-routes
+        paths:
+          - /v1/webhooks
+        strip_path: false
+        protocols:
+          - http
+          - https
+
+  # ---------------------------------------------------------------------------
+  # integration-service  (port 3015)
+  # ---------------------------------------------------------------------------
+  - name: integration-service
+    url: http://host.docker.internal:3015
+    routes:
+      - name: integration-routes
+        paths:
+          - /v1/integrations
+        strip_path: false
+        protocols:
+          - http
+          - https
+        plugins:
+          - name: rate-limiting
+            config:
+              hour: 1000
+              policy: local
+
+consumers:
+  - username: partner-sandbox
+    keyauth_credentials:
+      - key: hk-sandbox-key-00000000
+
+  - username: siteminder-prod
+    keyauth_credentials:
+      - key: hk-siteminder-0000000000000000
+
+  - username: cloudbeds-prod
+    keyauth_credentials:
+      - key: hk-cloudbeds-0000000000000000

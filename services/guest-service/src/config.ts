@@ -5,6 +5,7 @@ const schema = baseEnvSchema.extend({
   DATABASE_URL: z.string().url(),
   KAFKA_BROKERS: z.string().default('localhost:9094'),
   JWT_PUBLIC_KEY_BASE64: z.string().min(1),
+  VAULT_SERVICE_URL: z.string().url().default('http://localhost:3012'),
 })
 
 export const config = parseEnv(schema)

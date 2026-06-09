@@ -1,0 +1,169 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: fabric-orderer
+  namespace: fabric
+  labels:
+    app: fabric-orderer
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app: fabric-orderer
+  ports:
+    - name: grpc
+      port: 7050
+      targetPort: 7050
+    - name: admin
+      port: 7053
+      targetPort: 7053
+    - name: operations
+      port: 8443
+      targetPort: 8443
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: orderer0
+  namespace: fabric
+  labels:
+    app: fabric-orderer
+    statefulset.kubernetes.io/pod-name: fabric-orderer-0
+spec:
+  type: ClusterIP
+  selector:
+    app: fabric-orderer
+    statefulset.kubernetes.io/pod-name: fabric-orderer-0
+  ports:
+    - name: grpc
+      port: 7050
+      targetPort: 7050
+    - name: admin
+      port: 7053
+      targetPort: 7053
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: orderer1
+  namespace: fabric
+  labels:
+    app: fabric-orderer
+    statefulset.kubernetes.io/pod-name: fabric-orderer-1
+spec:
+  type: ClusterIP
+  selector:
+    app: fabric-orderer
+    statefulset.kubernetes.io/pod-name: fabric-orderer-1
+  ports:
+    - name: grpc
+      port: 7050
+      targetPort: 7050
+    - name: admin
+      port: 7053
+      targetPort: 7053
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: orderer2
+  namespace: fabric
+  labels:
+    app: fabric-orderer
+    statefulset.kubernetes.io/pod-name: fabric-orderer-2
+spec:
+  type: ClusterIP
+  selector:
+    app: fabric-orderer
+    statefulset.kubernetes.io/pod-name: fabric-orderer-2
+  ports:
+    - name: grpc
+      port: 7050
+      targetPort: 7050
+    - name: admin
+      port: 7053
+      targetPort: 7053
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fabric-peer
+  namespace: fabric
+  labels:
+    app: fabric-peer
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app: fabric-peer
+  ports:
+    - name: grpc
+      port: 7051
+      targetPort: 7051
+    - name: chaincode
+      port: 7052
+      targetPort: 7052
+    - name: operations
+      port: 9444
+      targetPort: 9444
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: peer0
+  namespace: fabric
+  labels:
+    app: fabric-peer
+    statefulset.kubernetes.io/pod-name: fabric-peer-0
+spec:
+  type: ClusterIP
+  selector:
+    app: fabric-peer
+    statefulset.kubernetes.io/pod-name: fabric-peer-0
+  ports:
+    - name: grpc
+      port: 7051
+      targetPort: 7051
+    - name: chaincode
+      port: 7052
+      targetPort: 7052
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: peer1
+  namespace: fabric
+  labels:
+    app: fabric-peer
+    statefulset.kubernetes.io/pod-name: fabric-peer-1
+spec:
+  type: ClusterIP
+  selector:
+    app: fabric-peer
+    statefulset.kubernetes.io/pod-name: fabric-peer-1
+  ports:
+    - name: grpc
+      port: 7051
+      targetPort: 7051
+    - name: chaincode
+      port: 7052
+      targetPort: 7052
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fabric-ca
+  namespace: fabric
+  labels:
+    app: fabric-ca
+spec:
+  type: ClusterIP
+  selector:
+    app: fabric-ca
+  ports:
+    - name: ca
+      port: 7054
+      targetPort: 7054
+    - name: operations
+      port: 17054
+      targetPort: 17054

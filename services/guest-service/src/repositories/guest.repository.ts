@@ -180,6 +180,26 @@ export class GuestRepository {
     }
   }
 
+  async eraseGuest(id: string, tenantId: string): Promise<void> {
+    await this.pool.query(
+      `UPDATE guest
+          SET first_name    = '[ERASED]',
+              last_name     = '[ERASED]',
+              email         = NULL,
+              phone         = NULL,
+              nationality   = NULL,
+              date_of_birth = NULL,
+              deleted_at    = NOW(),
+              updated_at    = NOW()
+        WHERE id = $1 AND tenant_id = $2`,
+      [id, tenantId],
+    )
+    await this.pool.query(
+      `DELETE FROM guest_document WHERE guest_id = $1 AND tenant_id = $2`,
+      [id, tenantId],
+    )
+  }
+
   async getPreferences(guestId: string, tenantId: string): Promise<GuestPreference | null> {
     const { rows } = await this.pool.query<Record<string, unknown>>(
       `SELECT guest_id, tenant_id, room_type_id, floor_preference,
