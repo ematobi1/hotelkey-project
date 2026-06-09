@@ -36,18 +36,22 @@ type ScenarioParams struct {
 }
 
 type SimResult struct {
-	TenantID          string   `json:"tenantId"`
-	SimulatedHours    int      `json:"simulatedHours"`
-	RoomsSimulated    int      `json:"roomsSimulated"`
-	PeakOccupancy     float64  `json:"peakOccupancy"`
-	AverageOccupancy  float64  `json:"averageOccupancy"`
-	ExpectedRevenue   float64  `json:"expectedRevenue"`
-	ExpectedCheckIns  int      `json:"expectedCheckIns"`
-	ExpectedCheckOuts int      `json:"expectedCheckOuts"`
-	HousekeepingTasks int      `json:"housekeepingTasks"`
-	StaffingAdequacy  string   `json:"staffingAdequacy"`
-	Warnings          []string `json:"warnings"`
-	ElapsedMs         int64    `json:"elapsedMs"`
+	TenantID              string   `json:"tenantId"`
+	SimulatedHours        int      `json:"simulatedHours"`
+	RoomsSimulated        int      `json:"roomsSimulated"`
+	PeakOccupancy         float64  `json:"peakOccupancy"`
+	AverageOccupancy      float64  `json:"averageOccupancy"`
+	ExpectedRevenue       float64  `json:"expectedRevenue"`
+	ExpectedCheckIns      int      `json:"expectedCheckIns"`
+	ExpectedCheckOuts     int      `json:"expectedCheckOuts"`
+	HousekeepingTasks     int      `json:"housekeepingTasks"`
+	StaffingAdequacy      string   `json:"staffingAdequacy"`
+	// Energy modelling: kWh consumed over the simulation horizon
+	EnergyKwh             float64  `json:"energyKwh"`
+	EnergyKwhPerRoom      float64  `json:"energyKwhPerRoom"`
+	CarbonKgCo2e          float64  `json:"carbonKgCo2e"`
+	Warnings              []string `json:"warnings"`
+	ElapsedMs             int64    `json:"elapsedMs"`
 }
 
 // Simulate runs a discrete-event simulation on a deep-copied snapshot.
@@ -180,6 +184,19 @@ func Simulate(snap *state.Snapshot, params ScenarioParams) *SimResult {
 		peak = 1.0
 	}
 
+	// Energy modelling: base load 0.4 kWh/room/hr + 1.2 kWh/occupied-room/hr (HVAC+lighting)
+	// Carbon factor: 0.233 kg CO2e per kWh (UK grid average; configurable in production)
+	const baseKwhPerRoomPerHour = 0.4
+	const occupiedKwhPerRoomPerHour = 1.2
+	const carbonFactorKgPerKwh = 0.233
+	totalKwh := 0.0
+	for _, occ := range occupancySamples {
+		occupiedRooms := occ * float64(totalRooms)
+		totalKwh += float64(totalRooms)*baseKwhPerRoomPerHour + occupiedRooms*occupiedKwhPerRoomPerHour
+	}
+	kwhPerRoom := totalKwh / float64(totalRooms)
+	carbonKg := totalKwh * carbonFactorKgPerKwh
+
 	return &SimResult{
 		TenantID:          params.TenantID,
 		SimulatedHours:    horizon,
@@ -191,6 +208,9 @@ func Simulate(snap *state.Snapshot, params ScenarioParams) *SimResult {
 		ExpectedCheckOuts: checkOuts,
 		HousekeepingTasks: hkTasks,
 		StaffingAdequacy:  staffingAdequacy,
+		EnergyKwh:         totalKwh,
+		EnergyKwhPerRoom:  kwhPerRoom,
+		CarbonKgCo2e:      carbonKg,
 		Warnings:          warnings,
 		ElapsedMs:         time.Since(start).Milliseconds(),
 	}

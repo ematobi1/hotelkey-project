@@ -93,15 +93,41 @@ async def get_booking_pace(tenant_id: str, target_date: date) -> dict:
     return {'bookings_7d': 0, 'target_date': str(target_date)}
 
 
+async def get_search_trends(tenant_id: str, destination: str, check_date: date) -> dict:
+    """
+    Fetch hotel search trend index from Google Travel Insights API.
+    Returns a normalised 0–1 demand index. Falls back to 0.5 if key not configured
+    or the API is unreachable.
+    """
+    if not settings.google_travel_insights_key:
+        return {'search_index': 0.5, 'source': 'fallback'}
+
+    url = (
+        f"https://travel.googleapis.com/v1/insights:lookupPopularity"
+        f"?key={settings.google_travel_insights_key}"
+        f"&destination={destination}"
+        f"&date={check_date}"
+    )
+    async with httpx.AsyncClient() as client:
+        data = await _fetch_json(client, url)
+
+    if not data:
+        return {'search_index': 0.5, 'source': 'fallback'}
+
+    raw_index = data.get('popularityScore', 50) / 100.0
+    return {'search_index': min(1.0, max(0.0, raw_index)), 'source': 'google_travel_insights'}
+
+
 async def collect_all_signals(tenant_id: str, target_date: date) -> dict:
     """Collect all demand signals in parallel for the 30-minute polling cycle."""
-    events, comp_rate, pace = await asyncio.gather(
+    events, comp_rate, pace, search = await asyncio.gather(
         get_local_events(tenant_id, 'unknown', target_date),
         get_competitor_rates(tenant_id, 'standard', target_date),
         get_booking_pace(tenant_id, target_date),
+        get_search_trends(tenant_id, 'unknown', target_date),
     )
 
-    demand_index = min(1.0, (pace['bookings_7d'] / 50) + (len(events) * 0.1))
+    demand_index = min(1.0, (pace['bookings_7d'] / 50) + (len(events) * 0.1) + (search['search_index'] * 0.2))
 
     return {
         'tenant_id': tenant_id,
@@ -109,5 +135,6 @@ async def collect_all_signals(tenant_id: str, target_date: date) -> dict:
         'local_events': events,
         'competitor_avg_rate': comp_rate,
         'booking_pace_7d': pace['bookings_7d'],
+        'search_trend_index': search['search_index'],
         'demand_index': demand_index,
     }
