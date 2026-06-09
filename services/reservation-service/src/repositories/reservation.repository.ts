@@ -190,6 +190,52 @@ export class ReservationRepository {
     return rows.map(rowToReservation)
   }
 
+  async update(
+    id: string,
+    tenantId: string,
+    fields: {
+      checkInDate?: Date
+      checkOutDate?: Date
+      adults?: number
+      children?: number
+      ratePerNight?: number
+      totalAmount?: number
+      specialRequests?: string | null
+      internalNotes?: string | null
+    },
+    client?: PoolClient,
+  ): Promise<Reservation> {
+    const db = client ?? this.pool
+    const { rows } = await db.query<Record<string, unknown>>(
+      `UPDATE reservation
+          SET check_in_date    = COALESCE($3, check_in_date),
+              check_out_date   = COALESCE($4, check_out_date),
+              adults           = COALESCE($5, adults),
+              children         = COALESCE($6, children),
+              rate_per_night   = COALESCE($7, rate_per_night),
+              total_amount     = COALESCE($8, total_amount),
+              special_requests = COALESCE($9, special_requests),
+              internal_notes   = COALESCE($10, internal_notes),
+              updated_at       = NOW()
+        WHERE id = $1 AND tenant_id = $2
+       RETURNING *`,
+      [
+        id,
+        tenantId,
+        fields.checkInDate ?? null,
+        fields.checkOutDate ?? null,
+        fields.adults ?? null,
+        fields.children ?? null,
+        fields.ratePerNight ?? null,
+        fields.totalAmount ?? null,
+        fields.specialRequests ?? null,
+        fields.internalNotes ?? null,
+      ],
+    )
+    if (!rows[0]) throw new NotFoundError('Reservation', id)
+    return rowToReservation(rows[0])
+  }
+
   getPool(): Pool {
     return this.pool
   }
