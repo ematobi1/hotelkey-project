@@ -5,6 +5,7 @@ import { getPool } from '../db/client'
 import { createKafkaClient, createProducer } from '@hotel-key/kafka'
 import { config } from '../config'
 import type { HkTaskType, HkPriority } from '@hotel-key/types'
+import { predictWorkload } from '../services/ml.client'
 
 async function buildService() {
   const kafka = createKafkaClient({ clientId: 'housekeeping-service', brokers: config.KAFKA_BROKERS.split(',') })
@@ -107,6 +108,64 @@ export const housekeepingRoutes: FastifyPluginAsync = async (app) => {
       const svc = await getService()
       const staff = await svc.listStaff(request.query.tenantId)
       return reply.send({ data: staff, meta: { total: staff.length } })
+    },
+  )
+
+  app.get<{ Querystring: { tenantId: string; date: string } }>(
+    '/workload-forecast',
+    {
+      schema: {
+        querystring: {
+          type: 'object',
+          required: ['tenantId', 'date'],
+          properties: {
+            tenantId: { type: 'string', format: 'uuid' },
+            date: { type: 'string', format: 'date' },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { tenantId } = request.query
+      const now = new Date()
+      const prediction = await predictWorkload({
+        tenantId,
+        hourOfDay: now.getHours(),
+        dayOfWeek: now.getDay() === 0 ? 6 : now.getDay() - 1,
+        occupancyRate: 0.7,
+        checkoutsToday: 0,
+        avgTaskDuration7d: 30,
+        tasksInProgress: 0,
+        staffOnDuty: 5,
+      })
+
+      if (!prediction) {
+        return reply.send({
+          data: {
+            fallback: true,
+            recommendation: 'Use standard task assignment',
+          },
+        })
+      }
+
+      const minutesPerRoom = prediction.predictedMinutesPerRoom
+      const topDrivers = Object.entries(prediction.shap_values)
+        .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
+        .slice(0, 3)
+        .map(([feature, value]) => ({ feature, contribution: value }))
+
+      return reply.send({
+        data: {
+          fallback: false,
+          predictedMinutesPerRoom: minutesPerRoom,
+          modelVersion: prediction.modelVersion,
+          topDrivers,
+          recommendation:
+            minutesPerRoom > 35
+              ? 'High workload predicted — consider adding staff or extending shift windows'
+              : 'Normal workload — standard task assignment applies',
+        },
+      })
     },
   )
 

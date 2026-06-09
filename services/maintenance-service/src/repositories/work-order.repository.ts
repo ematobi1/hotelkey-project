@@ -3,9 +3,21 @@ import { NotFoundError } from '../domain/errors'
 import type {
   WorkOrder,
   WorkOrderStatus,
+  WorkOrderCategory,
   CreateWorkOrderInput,
   ListWorkOrdersFilters,
 } from '../domain/errors'
+
+export interface RoomMaintenanceStats {
+  tenantId: string
+  roomId: string
+  equipmentType: WorkOrderCategory
+  daysSinceLastMaintenance: number
+  failureCount90d: number
+  emergencyCount30d: number
+  lastFailureSeverity: number
+  hasOpenOrder: boolean
+}
 
 function rowToWorkOrder(r: Record<string, unknown>): WorkOrder {
   return {
@@ -102,6 +114,37 @@ export class WorkOrderRepository {
     )
     if (!rows[0]) throw new NotFoundError('WorkOrder', id)
     return rowToWorkOrder(rows[0])
+  }
+
+  async findRoomsForPrediction(): Promise<RoomMaintenanceStats[]> {
+    const { rows } = await this.pool.query<Record<string, unknown>>(
+      `SELECT
+         w.tenant_id,
+         w.room_id,
+         w.category AS equipment_type,
+         COALESCE(
+           (EXTRACT(EPOCH FROM (NOW() - MAX(w.updated_at) FILTER (WHERE w.status = 'completed'))) / 86400)::integer,
+           180
+         ) AS days_since_last_maintenance,
+         COUNT(*) FILTER (WHERE w.created_at > NOW() - INTERVAL '90 days') AS failure_count_90d,
+         COUNT(*) FILTER (WHERE w.priority = 'urgent' AND w.created_at > NOW() - INTERVAL '30 days') AS emergency_count_30d,
+         BOOL_OR(w.status IN ('open', 'assigned', 'in_progress')) AS has_open_order,
+         MAX(CASE w.priority WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 ELSE 1 END) AS last_failure_severity
+       FROM work_order w
+       WHERE w.room_id IS NOT NULL
+         AND w.created_at > NOW() - INTERVAL '90 days'
+       GROUP BY w.tenant_id, w.room_id, w.category`,
+    )
+    return rows.map((r) => ({
+      tenantId: r['tenant_id'] as string,
+      roomId: r['room_id'] as string,
+      equipmentType: r['equipment_type'] as WorkOrderCategory,
+      daysSinceLastMaintenance: Number(r['days_since_last_maintenance']),
+      failureCount90d: Number(r['failure_count_90d']),
+      emergencyCount30d: Number(r['emergency_count_30d']),
+      lastFailureSeverity: Number(r['last_failure_severity']),
+      hasOpenOrder: r['has_open_order'] as boolean,
+    }))
   }
 
   async updateStatus(

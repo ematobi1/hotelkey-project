@@ -1,0 +1,38 @@
+services:
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.12.2
+    ports:
+      - '5000:5000'
+    command: >
+      mlflow server
+      --backend-store-uri postgresql://hotelkey:hotelkey_dev@postgres:5432/hotel_key_mlflow
+      --default-artifact-root s3://hotel-key-mlflow-artifacts
+      --host 0.0.0.0
+      --port 5000
+    environment:
+      AWS_ACCESS_KEY_ID: minio
+      AWS_SECRET_ACCESS_KEY: minio_secret
+      MLFLOW_S3_ENDPOINT_URL: http://minio:9000
+    depends_on:
+      - postgres
+      - minio
+
+  minio:
+    image: minio/minio:RELEASE.2024-03-15T01-07-19Z
+    ports:
+      - '9001:9000'
+      - '9002:9001'
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio_secret
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -f http://localhost:9000/minio/health/live || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  minio_data:

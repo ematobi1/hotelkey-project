@@ -5,7 +5,7 @@ import type {
   CreateWorkOrderInput,
   ListWorkOrdersFilters,
 } from '../domain/errors'
-import type { WorkOrderRepository } from '../repositories/work-order.repository'
+import type { WorkOrderRepository, RoomMaintenanceStats } from '../repositories/work-order.repository'
 import type { HotelKeyProducer } from '@hotel-key/kafka'
 import { createCloudEvent } from '@hotel-key/kafka'
 
@@ -104,5 +104,9 @@ export class MaintenanceService {
 
   async getWorkOrder(id: string, tenantId: string): Promise<WorkOrder> {
     return this.repo.findByIdOrThrow(id, tenantId)
+  }
+
+  async listRoomsForPrediction(): Promise<RoomMaintenanceStats[]> {
+    return this.repo.findRoomsForPrediction()
   }
 }
