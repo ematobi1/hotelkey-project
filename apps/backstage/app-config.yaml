@@ -1,0 +1,45 @@
+app:
+  title: Hotel Key Developer Portal
+  baseUrl: http://localhost:3300
+
+organization:
+  name: Hotel Key
+
+backend:
+  baseUrl: http://localhost:7007
+  listen:
+    port: 7007
+  database:
+    client: better-sqlite3
+    connection: ':memory:'
+  cors:
+    origin: http://localhost:3300
+    methods: [GET, HEAD, PATCH, POST, PUT, DELETE]
+    credentials: true
+
+integrations:
+  github:
+    - host: github.com
+      token: ${GITHUB_TOKEN}
+
+techdocs:
+  builder: local
+  generator:
+    runIn: docker
+  publisher:
+    type: local
+
+auth:
+  providers:
+    guest: {}
+
+catalog:
+  rules:
+    - allow: [Component, API, System, Domain, Resource, Location]
+  locations:
+    - type: url
+      target: https://github.com/ematobi1/hotelkey-project/blob/main/catalog-info.yaml
+    - type: file
+      target: ../../catalog-info.yaml
+      rules:
+        - allow: [Location]

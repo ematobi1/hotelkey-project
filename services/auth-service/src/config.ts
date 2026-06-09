@@ -9,6 +9,7 @@ const schema = baseEnvSchema.extend({
   JWT_REFRESH_TOKEN_TTL_DAYS: z.coerce.number().default(7),
   MFA_ENCRYPTION_KEY: z.string().length(64, 'Must be 32-byte hex (64 chars)'),
   KAFKA_BROKERS: z.string().default('localhost:9094'),
+  REDIS_URL: z.string().url().default('redis://localhost:6379'),
 })
 
 export const config = parseEnv(schema)

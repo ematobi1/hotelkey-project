@@ -117,6 +117,25 @@ export const guestRoutes: FastifyPluginAsync = async (app) => {
     },
   )
 
+  app.post<{ Params: { id: string }; Body: { tenantId: string } }>(
+    '/:id/erase',
+    {
+      schema: {
+        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } }, required: ['id'] },
+        body: {
+          type: 'object',
+          required: ['tenantId'],
+          properties: { tenantId: { type: 'string', format: 'uuid' } },
+        },
+      },
+    },
+    async (request, reply) => {
+      const svc = await getService()
+      await svc.eraseGuest(request.params.id, request.body.tenantId)
+      return reply.status(204).send()
+    },
+  )
+
   app.get<{ Params: { id: string }; Querystring: { tenantId: string } }>(
     '/:id/preferences',
     async (request, reply) => {

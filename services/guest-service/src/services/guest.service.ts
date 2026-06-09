@@ -3,6 +3,7 @@ import type { GuestRepository } from '../repositories/guest.repository'
 import type { HotelKeyProducer } from '@hotel-key/kafka'
 import { createCloudEvent } from '@hotel-key/kafka'
 import { EventTypes } from '@hotel-key/types'
+import { config } from '../config'
 
 export class GuestService {
   constructor(
@@ -50,6 +51,32 @@ export class GuestService {
     await this.producer.publish(
       'hotel-key.guest',
       createCloudEvent(EventTypes.GUEST_DELETED, 'guest-service', tenantId, {
+        guestId: id,
+      }),
+    )
+  }
+
+  async eraseGuest(id: string, tenantId: string): Promise<void> {
+    await this.guestRepo.findByIdOrThrow(id, tenantId)
+
+    try {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 10_000)
+      await fetch(`${config.VAULT_SERVICE_URL}/v1/vault/erase`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId, guestId: id }),
+        signal: controller.signal,
+      }).finally(() => clearTimeout(timeout))
+    } catch {
+      // best-effort: continue even if vault-service is unreachable
+    }
+
+    await this.guestRepo.eraseGuest(id, tenantId)
+
+    await this.producer.publish(
+      'hotel-key.guest',
+      createCloudEvent('hotel-key.guest.erased', 'guest-service', tenantId, {
         guestId: id,
       }),
     )

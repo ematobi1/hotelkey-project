@@ -1,0 +1,18 @@
+apiVersion: backstage.io/v1alpha1
+kind: Location
+metadata:
+  name: hotel-key-services
+  description: All Hotel Key microservices and their APIs
+spec:
+  targets:
+    - ./services/auth-service/catalog-info.yaml
+    - ./services/guest-service/catalog-info.yaml
+    - ./services/reservation-service/catalog-info.yaml
+    - ./services/room-service/catalog-info.yaml
+    - ./services/billing-service/catalog-info.yaml
+    - ./services/housekeeping-service/catalog-info.yaml
+    - ./services/maintenance-service/catalog-info.yaml
+    - ./services/pms-service/catalog-info.yaml
+    - ./services/notification-service/catalog-info.yaml
+    - ./services/lock-service/catalog-info.yaml
+    - ./services/channel-manager-service/catalog-info.yaml

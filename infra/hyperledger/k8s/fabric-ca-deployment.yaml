@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fabric-ca
+  namespace: fabric
+  labels:
+    app: fabric-ca
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fabric-ca
+  template:
+    metadata:
+      labels:
+        app: fabric-ca
+    spec:
+      containers:
+        - name: fabric-ca
+          image: hyperledger/fabric-ca:1.5
+          imagePullPolicy: IfNotPresent
+          command: ["sh", "-c", "fabric-ca-server start -b admin:adminpw -d"]
+          ports:
+            - containerPort: 7054
+              name: ca
+            - containerPort: 17054
+              name: operations
+          env:
+            - name: FABRIC_CA_HOME
+              value: /etc/hyperledger/fabric-ca-server
+            - name: FABRIC_CA_SERVER_CA_NAME
+              value: ca-hotel-key
+            - name: FABRIC_CA_SERVER_TLS_ENABLED
+              value: "true"
+            - name: FABRIC_CA_SERVER_PORT
+              value: "7054"
+            - name: FABRIC_CA_SERVER_OPERATIONS_LISTENADDRESS
+              value: "0.0.0.0:17054"
+            - name: FABRIC_CA_SERVER_DB_TYPE
+              value: postgres
+            - name: FABRIC_CA_SERVER_DB_DATASOURCE
+              valueFrom:
+                secretKeyRef:
+                  name: fabric-ca-db
+                  key: datasource
+          volumeMounts:
+            - name: fabric-ca-data
+              mountPath: /etc/hyperledger/fabric-ca-server
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /cainfo
+              port: 7054
+              scheme: HTTPS
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /cainfo
+              port: 7054
+              scheme: HTTPS
+            initialDelaySeconds: 10
+            periodSeconds: 5
+      volumes:
+        - name: fabric-ca-data
+          persistentVolumeClaim:
+            claimName: fabric-ca-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: fabric-ca-pvc
+  namespace: fabric
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: gp3

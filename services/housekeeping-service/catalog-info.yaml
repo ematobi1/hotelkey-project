@@ -1,0 +1,28 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: housekeeping-service
+  description: Manages housekeeping task queues, assigns staff, tracks room cleaning progress, and triggers room inspections
+  annotations:
+    github.com/project-slug: ematobi1/hotelkey-project
+    backstage.io/techdocs-ref: dir:.
+spec:
+  type: service
+  lifecycle: production
+  owner: hotel-key-team
+  system: hotel-key-pms
+  providesApis:
+    - housekeeping-service-api
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: housekeeping-service-api
+  description: housekeeping-service REST API
+spec:
+  type: openapi
+  lifecycle: production
+  owner: hotel-key-team
+  system: hotel-key-pms
+  definition:
+    $text: http://localhost:3006/docs/json

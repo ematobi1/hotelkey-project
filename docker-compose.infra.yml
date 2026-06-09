@@ -107,8 +107,32 @@ services:
       timeout: 5s
       retries: 5
 
+  apicurio:
+    image: apicurio/apicurio-registry-mem:2.5.11.Final
+    ports:
+      - '8085:8080'
+    environment:
+      REGISTRY_APIS_V2_DATE_FORMAT: "yyyy-MM-dd'T'HH:mm:ssZ"
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -f http://localhost:8080/health/ready || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  vault:
+    image: hashicorp/vault:1.16
+    ports:
+      - '8200:8200'
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: hotel-key-dev-token
+      VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+    cap_add:
+      - IPC_LOCK
+    command: server -dev
+
 volumes:
   postgres_data:
   redis_data:
   kafka_data:
   mongo_data:
+  apicurio_data:
