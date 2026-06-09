@@ -5,6 +5,16 @@ online_store:
   type: redis
   connection_string: redis://localhost:6379
 offline_store:
-  type: file
-  staged_data_uri: data/feast_staging
+  # ClickHouse offline store via feast-clickhouse community plugin.
+  # Install: pip install feast-clickhouse
+  # Local dev falls back to file store; set FEAST_OFFLINE_STORE=file to override.
+  type: feast_clickhouse.ClickHouseOfflineStore
+  host: localhost
+  port: 9000
+  database: hotel_key_analytics
+  user: hotelkey
+  password: hotelkey_dev
+  # Fallback for local dev when ClickHouse is not running:
+  # type: file
+  # staged_data_uri: data/feast_staging
 entity_key_serialization_version: 2
