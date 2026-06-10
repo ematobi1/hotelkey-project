@@ -6,5 +6,6 @@ allowBuilds:
   argon2: true
   cpu-features: true
   esbuild: true
+  pkcs11js: true
   protobufjs: true
   ssh2: true
