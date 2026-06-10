@@ -1,0 +1,87 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: evidently-reports
+  namespace: hotel-key
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: gp3
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: evidently-drift-monitor
+  namespace: hotel-key
+  labels:
+    app: evidently-drift-monitor
+spec:
+  schedule: "0 6 * * *"
+  timeZone: "UTC"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 7
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 1800
+      template:
+        metadata:
+          labels:
+            app: evidently-drift-monitor
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: drift-monitor
+              image: python:3.11
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  pip install --quiet evidently==0.4.16 mlflow==2.12.2 pandas pyarrow && \
+                  python /app/monitoring_config.py && \
+                  python /app/alerting/drift_alerter.py
+              env:
+                - name: MLFLOW_URI
+                  value: http://mlflow:5000
+                - name: REPORTS_DIR
+                  value: /reports
+                - name: NOTIFICATION_SERVICE_URL
+                  value: http://notification-service:3000
+                - name: DRIFT_THRESHOLD
+                  value: "0.3"
+                - name: CLICKHOUSE_HOST
+                  value: clickhouse
+                - name: CLICKHOUSE_PORT
+                  value: "8123"
+                - name: CLICKHOUSE_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: clickhouse-secret
+                      key: username
+                - name: CLICKHOUSE_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: clickhouse-secret
+                      key: password
+              resources:
+                requests:
+                  cpu: "250m"
+                  memory: "128Mi"
+                limits:
+                  cpu: "500m"
+                  memory: "256Mi"
+              volumeMounts:
+                - name: app-code
+                  mountPath: /app
+                - name: reports
+                  mountPath: /reports
+          volumes:
+            - name: app-code
+              configMap:
+                name: evidently-monitoring-scripts
+            - name: reports
+              persistentVolumeClaim:
+                claimName: evidently-reports

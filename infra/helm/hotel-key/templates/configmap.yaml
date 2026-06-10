@@ -1,0 +1,14 @@
+{{- range $key, $svc := .Values.services }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $svc.name }}-config
+  namespace: {{ $.Values.global.namespace }}
+  labels:
+    {{- include "hotel-key.labels" $ | nindent 4 }}
+    app: {{ $svc.name }}
+data:
+  NODE_ENV: production
+  PORT: {{ $svc.port | quote }}
+{{- end }}

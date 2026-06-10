@@ -1,0 +1,38 @@
+{
+  "name": "@hotel-key/pms-service",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch --env-file .env src/server.ts",
+    "build": "tsup src/server.ts --format cjs --clean",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "migrate": "node-pg-migrate -d $DATABASE_URL -m src/db/migrations up",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@fastify/cors": "^9.0.0",
+    "@fastify/helmet": "^11.0.0",
+    "@fastify/rate-limit": "^9.0.0",
+    "@fastify/swagger": "^8.14.0",
+    "@fastify/swagger-ui": "^4.0.0",
+    "@hotel-key/config": "workspace:*",
+    "@hotel-key/logger": "workspace:*",
+    "@hotel-key/types": "workspace:*",
+    "fastify": "^4.27.0",
+    "node-pg-migrate": "^7.3.0",
+    "pg": "^8.11.5",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.0",
+    "@types/pg": "^8.11.5",
+    "tsup": "^8.0.0",
+    "tsx": "^4.11.0",
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0"
+  }
+}

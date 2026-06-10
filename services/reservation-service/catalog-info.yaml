@@ -1,0 +1,28 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: reservation-service
+  description: Creates and manages reservations, handles check-in/check-out lifecycle, and enforces availability constraints
+  annotations:
+    github.com/project-slug: ematobi1/hotelkey-project
+    backstage.io/techdocs-ref: dir:.
+spec:
+  type: service
+  lifecycle: production
+  owner: hotel-key-team
+  system: hotel-key-pms
+  providesApis:
+    - reservation-service-api
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: reservation-service-api
+  description: reservation-service REST API
+spec:
+  type: openapi
+  lifecycle: production
+  owner: hotel-key-team
+  system: hotel-key-pms
+  definition:
+    $text: http://localhost:3003/docs/json

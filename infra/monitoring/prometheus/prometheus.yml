@@ -1,0 +1,36 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - rules/slo.yml
+  - rules/services.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+scrape_configs:
+  - job_name: hotel-key-services
+    static_configs:
+      - targets:
+          - host.docker.internal:3001   # auth-service
+          - host.docker.internal:3002   # guest-service
+          - host.docker.internal:3003   # room-service
+          - host.docker.internal:3004   # reservation-service
+          - host.docker.internal:3005   # billing-service
+          - host.docker.internal:3006   # housekeeping-service
+          - host.docker.internal:3007   # notification-service
+          - host.docker.internal:3008   # pms-service
+          - host.docker.internal:3009   # maintenance-service
+    metrics_path: /metrics
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: '.*:(\d+)'
+        target_label: port
+
+  - job_name: kong
+    static_configs:
+      - targets: ['host.docker.internal:8001']
+    metrics_path: /metrics
