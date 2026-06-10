@@ -164,7 +164,7 @@ export class GuestRepository {
         prefs.floorPreference ?? null,
         prefs.pillowType ?? null,
         prefs.dietary ?? null,
-        prefs.otherPreferences ? JSON.stringify(prefs.otherPreferences) : null,
+        JSON.stringify(prefs.otherPreferences ?? {}),
       ],
     )
     const r = rows[0]!

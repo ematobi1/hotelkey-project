@@ -78,7 +78,7 @@ export class TaskRepository {
               t.priority, t.assigned_to, t.due_at, t.started_at, t.completed_at, t.notes, t.created_at, t.updated_at
          FROM hk_task t
         WHERE t.tenant_id = $1
-          AND ($2::text IS NULL OR t.status = $2)
+          AND ($2::text IS NULL OR t.status = $2::hk_task_status)
           AND ($3::uuid IS NULL OR t.assigned_to = $3)
         ORDER BY t.priority ASC, t.due_at ASC NULLS LAST
         LIMIT $4`,
