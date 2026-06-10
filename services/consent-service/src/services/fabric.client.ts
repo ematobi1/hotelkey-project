@@ -1,7 +1,7 @@
 import * as grpc from '@grpc/grpc-js'
 import * as crypto from 'crypto'
 import * as fs from 'fs'
-import { connect, Contract, Gateway, Network, hash } from '@hyperledger/fabric-gateway'
+import { connect, Contract, Gateway, Network, hash, signers } from '@hyperledger/fabric-gateway'
 import { config } from '../config'
 import type { ConsentRecord } from '../domain/errors'
 
@@ -30,12 +30,7 @@ export class FabricClient {
         mspId: config.FABRIC_MSP_ID,
         credentials: certPem,
       },
-      signer: {
-        sign: async (digest: Uint8Array) => {
-          const signature = crypto.sign(null, Buffer.from(digest), privateKey)
-          return signature
-        },
-      },
+      signer: signers.newPrivateKeySigner(privateKey),
       hash: hash.sha256,
     })
 
