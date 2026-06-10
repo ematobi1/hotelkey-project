@@ -181,7 +181,7 @@ export class ReservationRepository {
     const { rows } = await this.pool.query<Record<string, unknown>>(
       `SELECT * FROM reservation
         WHERE tenant_id = $1
-          AND ($2::text IS NULL OR status = $2)
+          AND ($2::text IS NULL OR status = $2::reservation_status)
           AND ($3::uuid IS NULL OR guest_id = $3)
         ORDER BY created_at DESC
         LIMIT $4 OFFSET $5`,
