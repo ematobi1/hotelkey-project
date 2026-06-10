@@ -1,0 +1,158 @@
+global:
+  imageRegistry: ""
+  imageTag: latest
+  namespace: hotel-key
+
+services:
+  auth:
+    name: auth-service
+    port: 3001
+    replicas: 2
+    image: hotel-key/auth-service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    hpa:
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilization: 70
+
+  guest:
+    name: guest-service
+    port: 3002
+    replicas: 2
+    image: hotel-key/guest-service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    hpa:
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilization: 70
+
+  room:
+    name: room-service
+    port: 3003
+    replicas: 2
+    image: hotel-key/room-service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    hpa:
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilization: 70
+
+  reservation:
+    name: reservation-service
+    port: 3004
+    replicas: 2
+    image: hotel-key/reservation-service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    hpa:
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilization: 70
+
+  billing:
+    name: billing-service
+    port: 3005
+    replicas: 2
+    image: hotel-key/billing-service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    hpa:
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilization: 70
+
+  housekeeping:
+    name: housekeeping-service
+    port: 3006
+    replicas: 2
+    image: hotel-key/housekeeping-service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    hpa:
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilization: 70
+
+  notification:
+    name: notification-service
+    port: 3007
+    replicas: 2
+    image: hotel-key/notification-service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    hpa:
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilization: 70
+
+  pms:
+    name: pms-service
+    port: 3008
+    replicas: 2
+    image: hotel-key/pms-service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    hpa:
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilization: 70
+
+  maintenance:
+    name: maintenance-service
+    port: 3009
+    replicas: 2
+    image: hotel-key/maintenance-service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    hpa:
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilization: 70

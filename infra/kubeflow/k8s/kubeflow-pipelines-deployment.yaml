@@ -1,0 +1,215 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kubeflow-pipelines-sqlite
+  namespace: hotel-key
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: gp3
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-pipeline
+  namespace: hotel-key
+  labels:
+    app: ml-pipeline
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ml-pipeline
+  template:
+    metadata:
+      labels:
+        app: ml-pipeline
+    spec:
+      serviceAccountName: kubeflow-pipelines-sa
+      containers:
+        - name: api-server
+          image: gcr.io/ml-pipeline/api-server:2.1.0
+          ports:
+            - name: http
+              containerPort: 8888
+            - name: grpc
+              containerPort: 8887
+          env:
+            - name: DBCONFIG_DRIVER_NAME
+              value: sqlite3
+            - name: DBCONFIG_DB_NAME
+              value: /data/mlpipeline.db
+            - name: OBJECTSTORECONFIG_HOSTNAME
+              value: minio
+            - name: OBJECTSTORECONFIG_PORT
+              value: "9000"
+            - name: OBJECTSTORECONFIG_BUCKETNAME
+              value: mlpipeline
+            - name: OBJECTSTORECONFIG_ACCESSKEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secret
+                  key: access-key
+            - name: OBJECTSTORECONFIG_SECRETACCESSKEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secret
+                  key: secret-key
+            - name: OBJECTSTORECONFIG_SECURE
+              value: "false"
+            - name: DEFAULTPIPELINERUNNERSERVICEACCOUNT
+              value: pipeline-runner
+            - name: ML_PIPELINE_VISUALIZATIONSERVER_SERVICE_HOST
+              value: ml-pipeline-visualizationserver
+            - name: ML_PIPELINE_VISUALIZATIONSERVER_SERVICE_PORT
+              value: "8888"
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "2Gi"
+          readinessProbe:
+            httpGet:
+              path: /apis/v1beta1/healthz
+              port: 8888
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /apis/v1beta1/healthz
+              port: 8888
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          volumeMounts:
+            - name: sqlite-data
+              mountPath: /data
+      volumes:
+        - name: sqlite-data
+          persistentVolumeClaim:
+            claimName: kubeflow-pipelines-sqlite
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-pipeline-persistenceagent
+  namespace: hotel-key
+  labels:
+    app: ml-pipeline-persistenceagent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ml-pipeline-persistenceagent
+  template:
+    metadata:
+      labels:
+        app: ml-pipeline-persistenceagent
+    spec:
+      serviceAccountName: kubeflow-pipelines-sa
+      containers:
+        - name: persistence-agent
+          image: gcr.io/ml-pipeline/persistenceagent:2.1.0
+          env:
+            - name: NAMESPACE
+              value: hotel-key
+            - name: TTL_IN_SECONDS
+              value: "604800"
+            - name: NUM_WORKERS
+              value: "4"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-pipeline-scheduledworkflow
+  namespace: hotel-key
+  labels:
+    app: ml-pipeline-scheduledworkflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ml-pipeline-scheduledworkflow
+  template:
+    metadata:
+      labels:
+        app: ml-pipeline-scheduledworkflow
+    spec:
+      serviceAccountName: kubeflow-pipelines-sa
+      containers:
+        - name: scheduledworkflow
+          image: gcr.io/ml-pipeline/scheduledworkflow:2.1.0
+          env:
+            - name: NAMESPACE
+              value: hotel-key
+            - name: CRON_SCHEDULE_TIMEZONE
+              value: UTC
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-pipeline
+  namespace: hotel-key
+  labels:
+    app: ml-pipeline
+spec:
+  type: ClusterIP
+  selector:
+    app: ml-pipeline
+  ports:
+    - name: http
+      port: 8888
+      targetPort: 8888
+    - name: grpc
+      port: 8887
+      targetPort: 8887
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubeflow-pipelines-sa
+  namespace: hotel-key
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kubeflow-pipelines-role
+  namespace: hotel-key
+rules:
+  - apiGroups: ["argoproj.io"]
+    resources: ["workflows"]
+    verbs: ["create", "get", "list", "watch", "update", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "configmaps", "secrets"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kubeflow-pipelines-rolebinding
+  namespace: hotel-key
+subjects:
+  - kind: ServiceAccount
+    name: kubeflow-pipelines-sa
+    namespace: hotel-key
+roleRef:
+  kind: Role
+  name: kubeflow-pipelines-role
+  apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,154 @@
+---
+Organizations:
+  - &OrdererOrg
+    Name: OrdererOrg
+    ID: OrdererMSP
+    MSPDir: crypto-config/ordererOrganizations/orderer.hotel-key.internal/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('OrdererMSP.member')"
+      Writers:
+        Type: Signature
+        Rule: "OR('OrdererMSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('OrdererMSP.admin')"
+
+  - &HotelKeyOrg
+    Name: HotelKeyOrg
+    ID: HotelKeyMSP
+    MSPDir: crypto-config/peerOrganizations/hotel-key.internal/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('HotelKeyMSP.admin', 'HotelKeyMSP.peer', 'HotelKeyMSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('HotelKeyMSP.admin', 'HotelKeyMSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('HotelKeyMSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('HotelKeyMSP.peer')"
+    AnchorPeers:
+      - Host: peer0.hotel-key.internal
+        Port: 7051
+      - Host: peer1.hotel-key.internal
+        Port: 7051
+
+Capabilities:
+  Channel: &ChannelCapabilities
+    V2_0: true
+  Orderer: &OrdererCapabilities
+    V2_0: true
+  Application: &ApplicationCapabilities
+    V2_0: true
+
+Orderer: &OrdererDefaults
+  OrdererType: etcdraft
+  Addresses:
+    - orderer0.hotel-key.internal:7050
+    - orderer1.hotel-key.internal:7050
+    - orderer2.hotel-key.internal:7050
+  EtcdRaft:
+    Consenters:
+      - Host: orderer0.hotel-key.internal
+        Port: 7050
+        ClientTLSCert: crypto-config/ordererOrganizations/orderer.hotel-key.internal/orderers/orderer0.hotel-key.internal/tls/server.crt
+        ServerTLSCert: crypto-config/ordererOrganizations/orderer.hotel-key.internal/orderers/orderer0.hotel-key.internal/tls/server.crt
+      - Host: orderer1.hotel-key.internal
+        Port: 7050
+        ClientTLSCert: crypto-config/ordererOrganizations/orderer.hotel-key.internal/orderers/orderer1.hotel-key.internal/tls/server.crt
+        ServerTLSCert: crypto-config/ordererOrganizations/orderer.hotel-key.internal/orderers/orderer1.hotel-key.internal/tls/server.crt
+      - Host: orderer2.hotel-key.internal
+        Port: 7050
+        ClientTLSCert: crypto-config/ordererOrganizations/orderer.hotel-key.internal/orderers/orderer2.hotel-key.internal/tls/server.crt
+        ServerTLSCert: crypto-config/ordererOrganizations/orderer.hotel-key.internal/orderers/orderer2.hotel-key.internal/tls/server.crt
+    Options:
+      TickInterval: 500ms
+      ElectionTick: 10
+      HeartbeatTick: 1
+      MaxInflightBlocks: 5
+      SnapshotIntervalSize: 16 MB
+  BatchTimeout: 2s
+  BatchSize:
+    MaxMessageCount: 500
+    AbsoluteMaxBytes: 10 MB
+    PreferredMaxBytes: 2 MB
+  Organizations:
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+    BlockValidation:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+  Capabilities:
+    <<: *OrdererCapabilities
+
+Application: &ApplicationDefaults
+  Organizations:
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+    LifecycleEndorsement:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Endorsement"
+    Endorsement:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Endorsement"
+  Capabilities:
+    <<: *ApplicationCapabilities
+
+Channel: &ChannelDefaults
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+  Capabilities:
+    <<: *ChannelCapabilities
+
+Profiles:
+  HotelKeyGenesis:
+    <<: *ChannelDefaults
+    Orderer:
+      <<: *OrdererDefaults
+      Organizations:
+        - *OrdererOrg
+      Capabilities:
+        <<: *OrdererCapabilities
+    Consortiums:
+      HotelKeyConsortium:
+        Organizations:
+          - *HotelKeyOrg
+
+  HotelKeyChannel:
+    Consortium: HotelKeyConsortium
+    <<: *ChannelDefaults
+    Application:
+      <<: *ApplicationDefaults
+      Organizations:
+        - *HotelKeyOrg
+      Capabilities:
+        <<: *ApplicationCapabilities

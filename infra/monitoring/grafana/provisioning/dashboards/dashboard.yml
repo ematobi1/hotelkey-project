@@ -1,0 +1,7 @@
+apiVersion: 1
+providers:
+  - name: Hotel Key
+    folder: Hotel Key
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards

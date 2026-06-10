@@ -1,0 +1,25 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: auth-service
+  namespace: hotel-key
+spec:
+  hosts:
+    - auth-service
+  gateways:
+    - hotel-key-gateway
+    - mesh
+  http:
+    - match:
+        - uri:
+            prefix: /v1/auth
+      route:
+        - destination:
+            host: auth-service
+            port:
+              number: 3001
+      timeout: 30s
+      retries:
+        attempts: 3
+        perTryTimeout: 10s
+        retryOn: "5xx,reset,connect-failure"

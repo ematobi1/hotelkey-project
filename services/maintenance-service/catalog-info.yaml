@@ -1,0 +1,28 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: maintenance-service
+  description: Tracks maintenance work orders, manages asset repair workflows, and integrates with room status updates
+  annotations:
+    github.com/project-slug: ematobi1/hotelkey-project
+    backstage.io/techdocs-ref: dir:.
+spec:
+  type: service
+  lifecycle: production
+  owner: hotel-key-team
+  system: hotel-key-pms
+  providesApis:
+    - maintenance-service-api
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: maintenance-service-api
+  description: maintenance-service REST API
+spec:
+  type: openapi
+  lifecycle: production
+  owner: hotel-key-team
+  system: hotel-key-pms
+  definition:
+    $text: http://localhost:3009/docs/json

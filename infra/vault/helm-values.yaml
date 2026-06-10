@@ -1,0 +1,45 @@
+global:
+  enabled: true
+  tlsDisable: false
+
+server:
+  ha:
+    enabled: true
+    replicas: 3
+    raft:
+      enabled: true
+      setNodeId: true
+      config: |
+        ui = true
+        cluster_name = "hotel-key-vault"
+        storage "raft" {
+          path    = "/vault/data"
+          node_id = "HOSTNAME"
+        }
+        listener "tcp" {
+          address         = "[::]:8200"
+          cluster_address = "[::]:8201"
+          tls_cert_file   = "/vault/userconfig/vault-tls/tls.crt"
+          tls_key_file    = "/vault/userconfig/vault-tls/tls.key"
+        }
+        service_registration "kubernetes" {}
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 250m
+    limits:
+      memory: 512Mi
+      cpu: 500m
+  dataStorage:
+    size: 10Gi
+
+injector:
+  enabled: true
+  resources:
+    requests:
+      memory: 64Mi
+      cpu: 50m
+
+ui:
+  enabled: true
+  serviceType: ClusterIP

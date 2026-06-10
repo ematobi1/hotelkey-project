@@ -1,0 +1,143 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: fabric-peer
+  namespace: fabric
+  labels:
+    app: fabric-peer
+spec:
+  serviceName: fabric-peer
+  replicas: 2
+  selector:
+    matchLabels:
+      app: fabric-peer
+  template:
+    metadata:
+      labels:
+        app: fabric-peer
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: peer
+          image: hyperledger/fabric-peer:2.5
+          imagePullPolicy: IfNotPresent
+          command: ["peer", "node", "start"]
+          ports:
+            - containerPort: 7051
+              name: grpc
+            - containerPort: 7052
+              name: chaincode
+            - containerPort: 9444
+              name: operations
+          env:
+            - name: CORE_VM_ENDPOINT
+              value: ""
+            - name: FABRIC_LOGGING_SPEC
+              value: INFO
+            - name: CORE_PEER_TLS_ENABLED
+              value: "true"
+            - name: CORE_PEER_TLS_CERT_FILE
+              value: /etc/hyperledger/fabric/tls/server.crt
+            - name: CORE_PEER_TLS_KEY_FILE
+              value: /etc/hyperledger/fabric/tls/server.key
+            - name: CORE_PEER_TLS_ROOTCERT_FILE
+              value: /etc/hyperledger/fabric/tls/ca.crt
+            - name: CORE_PEER_LOCALMSPID
+              value: HotelKeyMSP
+            - name: CORE_PEER_MSPCONFIGPATH
+              value: /etc/hyperledger/fabric/msp
+            - name: CORE_OPERATIONS_LISTENADDRESS
+              value: "0.0.0.0:9444"
+            - name: CORE_LEDGER_STATE_STATEDATABASE
+              value: CouchDB
+            - name: CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS
+              value: localhost:5984
+            - name: CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: couchdb-credentials
+                  key: username
+            - name: CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: couchdb-credentials
+                  key: password
+          volumeMounts:
+            - name: peer-data
+              mountPath: /var/hyperledger/production
+            - name: peer-msp
+              mountPath: /etc/hyperledger/fabric/msp
+            - name: peer-tls
+              mountPath: /etc/hyperledger/fabric/tls
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          livenessProbe:
+            grpc:
+              port: 7051
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            grpc:
+              port: 7051
+            initialDelaySeconds: 10
+            periodSeconds: 5
+
+        - name: couchdb
+          image: couchdb:3.2.1
+          ports:
+            - containerPort: 5984
+              name: couchdb
+          env:
+            - name: COUCHDB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: couchdb-credentials
+                  key: username
+            - name: COUCHDB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: couchdb-credentials
+                  key: password
+          volumeMounts:
+            - name: couchdb-data
+              mountPath: /opt/couchdb/data
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+      volumes:
+        - name: peer-msp
+          secret:
+            secretName: fabric-peer-msp
+        - name: peer-tls
+          secret:
+            secretName: fabric-peer-tls
+
+  volumeClaimTemplates:
+    - metadata:
+        name: peer-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: gp3
+    - metadata:
+        name: couchdb-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: gp3

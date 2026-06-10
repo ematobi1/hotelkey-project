@@ -1,0 +1,29 @@
+{
+  "type": "record",
+  "name": "MaintenanceWorkOrderCreated",
+  "namespace": "io.hotelkey.events",
+  "doc": "CloudEvents envelope for hotel-key.maintenance.work_order_created",
+  "fields": [
+    {"name": "specversion", "type": "string", "default": "1.0"},
+    {"name": "id", "type": "string"},
+    {"name": "source", "type": "string"},
+    {"name": "type", "type": "string", "default": "hotel-key.maintenance.work_order_created"},
+    {"name": "time", "type": "string"},
+    {"name": "datacontenttype", "type": "string", "default": "application/json"},
+    {"name": "tenantid", "type": "string"},
+    {
+      "name": "data",
+      "type": {
+        "type": "record",
+        "name": "MaintenanceWorkOrderCreatedData",
+        "fields": [
+          {"name": "workOrderId", "type": "string"},
+          {"name": "roomId", "type": ["null", "string"], "default": null},
+          {"name": "title", "type": "string"},
+          {"name": "category", "type": "string"},
+          {"name": "priority", "type": "string"}
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{{- range $key, $svc := .Values.services }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $svc.name }}
+  namespace: {{ $.Values.global.namespace }}
+  labels:
+    {{- include "hotel-key.labels" $ | nindent 4 }}
+    app: {{ $svc.name }}
+spec:
+  replicas: {{ $svc.replicas }}
+  selector:
+    matchLabels:
+      app: {{ $svc.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $svc.name }}
+        version: v1
+    spec:
+      serviceAccountName: {{ $svc.name }}
+      containers:
+        - name: {{ $svc.name }}
+          image: {{ include "hotel-key.image" (dict "global" $.Values.global "svc" $svc) }}
+          ports:
+            - containerPort: {{ $svc.port }}
+          envFrom:
+            - secretRef:
+                name: {{ $svc.name }}-secrets
+            - configMapRef:
+                name: {{ $svc.name }}-config
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ $svc.port }}
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ $svc.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: {{ $svc.resources.requests.cpu }}
+              memory: {{ $svc.resources.requests.memory }}
+            limits:
+              cpu: {{ $svc.resources.limits.cpu }}
+              memory: {{ $svc.resources.limits.memory }}
+      terminationGracePeriodSeconds: 30
+{{- end }}

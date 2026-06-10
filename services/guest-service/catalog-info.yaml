@@ -1,0 +1,28 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: guest-service
+  description: Manages guest profiles, preferences, documents, and GDPR erasure requests
+  annotations:
+    github.com/project-slug: ematobi1/hotelkey-project
+    backstage.io/techdocs-ref: dir:.
+spec:
+  type: service
+  lifecycle: production
+  owner: hotel-key-team
+  system: hotel-key-pms
+  providesApis:
+    - guest-service-api
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: guest-service-api
+  description: guest-service REST API
+spec:
+  type: openapi
+  lifecycle: production
+  owner: hotel-key-team
+  system: hotel-key-pms
+  definition:
+    $text: http://localhost:3002/docs/json

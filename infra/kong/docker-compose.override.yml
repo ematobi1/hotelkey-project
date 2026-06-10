@@ -1,0 +1,13 @@
+services:
+  kong:
+    build: ./infra/kong
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
