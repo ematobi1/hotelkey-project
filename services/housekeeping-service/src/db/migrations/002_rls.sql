@@ -11,7 +11,7 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-    CREATE POLICY superuser_bypass ON hk_staff TO postgres USING (true);
+    EXECUTE format('CREATE POLICY superuser_bypass ON hk_staff TO %I USING (true)', current_user);
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
@@ -27,7 +27,7 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-    CREATE POLICY superuser_bypass ON hk_task TO postgres USING (true);
+    EXECUTE format('CREATE POLICY superuser_bypass ON hk_task TO %I USING (true)', current_user);
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
@@ -43,6 +43,6 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-    CREATE POLICY superuser_bypass ON hk_inspection TO postgres USING (true);
+    EXECUTE format('CREATE POLICY superuser_bypass ON hk_inspection TO %I USING (true)', current_user);
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;

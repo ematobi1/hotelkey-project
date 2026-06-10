@@ -11,7 +11,7 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-    CREATE POLICY superuser_bypass ON folio TO postgres USING (true);
+    EXECUTE format('CREATE POLICY superuser_bypass ON folio TO %I USING (true)', current_user);
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
@@ -27,7 +27,7 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-    CREATE POLICY superuser_bypass ON folio_line_item TO postgres USING (true);
+    EXECUTE format('CREATE POLICY superuser_bypass ON folio_line_item TO %I USING (true)', current_user);
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
@@ -43,6 +43,6 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-    CREATE POLICY superuser_bypass ON payment TO postgres USING (true);
+    EXECUTE format('CREATE POLICY superuser_bypass ON payment TO %I USING (true)', current_user);
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;

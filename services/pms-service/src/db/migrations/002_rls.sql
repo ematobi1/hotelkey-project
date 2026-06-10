@@ -12,6 +12,6 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-    CREATE POLICY superuser_bypass ON room_type TO hotelkey USING (true);
+    EXECUTE format('CREATE POLICY superuser_bypass ON room_type TO %I USING (true)', current_user);
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
