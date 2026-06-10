@@ -47,8 +47,9 @@ export class BiService {
           {
             type: 'text',
             text: SYSTEM_PROMPT,
+            // reason: cache_control is valid per the API but not yet typed on TextBlockParam in this SDK version
             cache_control: { type: 'ephemeral' },
-          },
+          } as unknown as Anthropic.TextBlockParam,
         ],
         tools: toolDefinitions,
         messages,
