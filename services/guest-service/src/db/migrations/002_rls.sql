@@ -11,7 +11,7 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-    CREATE POLICY superuser_bypass ON guest TO postgres USING (true);
+    EXECUTE format('CREATE POLICY superuser_bypass ON guest TO %I USING (true)', current_user);
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
@@ -27,7 +27,7 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-    CREATE POLICY superuser_bypass ON guest_preference TO postgres USING (true);
+    EXECUTE format('CREATE POLICY superuser_bypass ON guest_preference TO %I USING (true)', current_user);
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
@@ -43,6 +43,6 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-    CREATE POLICY superuser_bypass ON guest_document TO postgres USING (true);
+    EXECUTE format('CREATE POLICY superuser_bypass ON guest_document TO %I USING (true)', current_user);
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;

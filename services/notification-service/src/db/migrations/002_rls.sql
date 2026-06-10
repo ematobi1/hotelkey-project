@@ -19,7 +19,7 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-    CREATE POLICY superuser_bypass ON notification_template TO postgres USING (true);
+    EXECUTE format('CREATE POLICY superuser_bypass ON notification_template TO %I USING (true)', current_user);
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
@@ -35,7 +35,7 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-    CREATE POLICY superuser_bypass ON notification_preference TO postgres USING (true);
+    EXECUTE format('CREATE POLICY superuser_bypass ON notification_preference TO %I USING (true)', current_user);
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
@@ -51,6 +51,6 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-    CREATE POLICY superuser_bypass ON notification_log TO postgres USING (true);
+    EXECUTE format('CREATE POLICY superuser_bypass ON notification_log TO %I USING (true)', current_user);
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;

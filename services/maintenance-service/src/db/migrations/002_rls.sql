@@ -10,6 +10,6 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-    CREATE POLICY superuser_bypass ON work_order TO hotelkey USING (true);
+    EXECUTE format('CREATE POLICY superuser_bypass ON work_order TO %I USING (true)', current_user);
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
