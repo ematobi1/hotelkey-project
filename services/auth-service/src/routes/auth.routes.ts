@@ -42,12 +42,17 @@ function buildDeps() {
   }
 }
 
-let kafkaProducer: HotelKeyProducer | null = null
-async function getKafkaProducer(): Promise<HotelKeyProducer> {
-  if (!kafkaProducer) {
+const _noopProducer: HotelKeyProducer = { publish: async () => {}, close: async () => {} }
+let kafkaProducer: HotelKeyProducer = _noopProducer
+
+;(async () => {
+  try {
     const kafka = createKafkaClient({ clientId: 'auth-service', brokers: config.KAFKA_BROKERS.split(',') })
     kafkaProducer = await createProducer(kafka)
-  }
+  } catch { /* Kafka unavailable — events silently dropped */ }
+})()
+
+function getKafkaProducer(): HotelKeyProducer {
   return kafkaProducer
 }
 
@@ -210,7 +215,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
       const { rawToken } = await magicLinkRepo.create({ tenantId, guestId, reservationId, guestEmail, ttlMinutes: 60 })
 
       try {
-        const producer = await getKafkaProducer()
+        const producer = getKafkaProducer()
         const event = createCloudEvent(
           'hotel-key.auth.magic_link.created',
           'auth-service',

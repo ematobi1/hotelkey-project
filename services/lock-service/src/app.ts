@@ -60,19 +60,24 @@ export async function createApp(): Promise<FastifyInstance> {
   const assaClient = new AssaAbloyClient(config.ASSA_ABLOY_API_BASE_URL, config.ASSA_ABLOY_API_KEY)
   const lockService = new LockService(lockRepo, assaClient)
 
-  const kafka = createKafkaClient({
-    clientId: 'lock-service',
-    brokers: config.KAFKA_BROKERS.split(','),
-  })
-  const hotelKeyConsumer = await createConsumer(kafka, 'lock-reservation-consumer')
-  const reservationConsumer = new ReservationConsumer(hotelKeyConsumer, lockService, lockRepo)
-
   app.addHook('onReady', async () => {
-    await reservationConsumer.start()
-  })
-
-  app.addHook('onClose', async () => {
-    await reservationConsumer.close()
+    // Fire-and-forget: don't block onReady waiting for Kafka connection
+    ;(async () => {
+      try {
+        const kafka = createKafkaClient({
+          clientId: 'lock-service',
+          brokers: config.KAFKA_BROKERS.split(','),
+        })
+        const hotelKeyConsumer = await createConsumer(kafka, 'lock-reservation-consumer')
+        const reservationConsumer = new ReservationConsumer(hotelKeyConsumer, lockService, lockRepo)
+        await reservationConsumer.start()
+        app.addHook('onClose', async () => {
+          await reservationConsumer.close()
+        })
+      } catch (err) {
+        app.log.warn({ err }, 'Kafka unavailable — reservation consumer disabled')
+      }
+    })()
   })
 
   app.get('/health', async () => ({ status: 'ok', service: 'lock-service' }))

@@ -8,15 +8,18 @@ import type { RoomStatus } from '@hotel-key/types'
 
 const VALID_STATUSES: RoomStatus[] = ['clean', 'dirty', 'occupied', 'inspecting', 'maintenance', 'out_of_order']
 
-async function buildService() {
-  const kafka = createKafkaClient({ clientId: 'room-service', brokers: config.KAFKA_BROKERS.split(',') })
-  const producer = await createProducer(kafka)
-  return new RoomService(new RoomRepository(getPool()), producer)
-}
-
 let service: RoomService | null = null
-async function getService() {
-  if (!service) service = await buildService()
+async function getService(): Promise<RoomService> {
+  if (!service) {
+    const producer = { publish: async () => {}, close: async () => {} }
+    ;(async () => {
+      try {
+        const kafka = createKafkaClient({ clientId: 'room-service', brokers: config.KAFKA_BROKERS.split(',') })
+        Object.assign(producer, await createProducer(kafka))
+      } catch { /* Kafka unavailable — events silently dropped */ }
+    })()
+    service = new RoomService(new RoomRepository(getPool()), producer)
+  }
   return service
 }
 

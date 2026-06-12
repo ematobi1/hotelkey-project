@@ -11,19 +11,13 @@ import { getPool } from './db/client'
 async function start() {
   const app = await createApp()
 
-  const kafka = createKafkaClient({
-    clientId: 'housekeeping-service-consumer',
-    brokers: config.KAFKA_BROKERS.split(','),
-  })
-  const producer = await createProducer(kafka)
-  const consumer = await createConsumer(kafka, 'housekeeping-service')
-  const housekeepingService = new HousekeepingService(new TaskRepository(getPool()), producer)
-  await registerConsumers(consumer, housekeepingService)
+  let consumer: Awaited<ReturnType<typeof createConsumer>> | undefined
+  let producer: Awaited<ReturnType<typeof createProducer>> | undefined
 
   const shutdown = async (signal: string) => {
     app.log.info({ signal }, 'Shutting down')
-    await consumer.close()
-    await producer.close()
+    await consumer?.close()
+    await producer?.close()
     await app.close()
     await closePool()
     process.exit(0)
@@ -37,6 +31,20 @@ async function start() {
   } catch (err) {
     app.log.error(err, 'Failed to start server')
     process.exit(1)
+  }
+
+  // Kafka init after server is listening so health checks pass immediately
+  try {
+    const kafka = createKafkaClient({
+      clientId: 'housekeeping-service-consumer',
+      brokers: config.KAFKA_BROKERS.split(','),
+    })
+    producer = await createProducer(kafka)
+    consumer = await createConsumer(kafka, 'housekeeping-service')
+    const housekeepingService = new HousekeepingService(new TaskRepository(getPool()), producer)
+    await registerConsumers(consumer, housekeepingService)
+  } catch (err) {
+    app.log.warn({ err }, 'Kafka unavailable — consumers disabled')
   }
 }
 

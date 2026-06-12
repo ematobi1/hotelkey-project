@@ -10,24 +10,11 @@ import { FolioRepository } from './repositories/folio.repository'
 async function start() {
   const app = await createApp()
 
-  const kafka = createKafkaClient({
-    clientId: 'billing-service-consumer',
-    brokers: config.KAFKA_BROKERS.split(','),
-  })
-  const consumer = await createConsumer(kafka, 'billing-minibar-consumer')
-  const pool = getPool()
-  const producer = await createProducer(kafka)
-  const billingService = new BillingService(
-    new FolioRepository(pool),
-    producer,
-    pool,
-    config.STRIPE_SECRET_KEY,
-  )
-  await startMinibarConsumer(consumer, billingService)
+  let consumer: Awaited<ReturnType<typeof createConsumer>> | undefined
 
   const shutdown = async (signal: string) => {
     app.log.info({ signal }, 'Shutting down')
-    await consumer.close()
+    await consumer?.close()
     await app.close()
     await closePool()
     process.exit(0)
@@ -41,6 +28,26 @@ async function start() {
   } catch (err) {
     app.log.error(err, 'Failed to start server')
     process.exit(1)
+  }
+
+  // Kafka init after server is listening so health checks pass immediately
+  try {
+    const kafka = createKafkaClient({
+      clientId: 'billing-service-consumer',
+      brokers: config.KAFKA_BROKERS.split(','),
+    })
+    consumer = await createConsumer(kafka, 'billing-minibar-consumer')
+    const pool = getPool()
+    const producer = await createProducer(kafka)
+    const billingService = new BillingService(
+      new FolioRepository(pool),
+      producer,
+      pool,
+      config.STRIPE_SECRET_KEY,
+    )
+    await startMinibarConsumer(consumer, billingService)
+  } catch (err) {
+    app.log.warn({ err }, 'Kafka unavailable — minibar consumer disabled')
   }
 }
 

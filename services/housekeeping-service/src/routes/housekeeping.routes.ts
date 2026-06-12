@@ -7,15 +7,18 @@ import { config } from '../config'
 import type { HkTaskType, HkPriority } from '@hotel-key/types'
 import { predictWorkload } from '../services/ml.client'
 
-async function buildService() {
-  const kafka = createKafkaClient({ clientId: 'housekeeping-service', brokers: config.KAFKA_BROKERS.split(',') })
-  const producer = await createProducer(kafka)
-  return new HousekeepingService(new TaskRepository(getPool()), producer)
-}
-
 let service: HousekeepingService | null = null
-async function getService() {
-  if (!service) service = await buildService()
+async function getService(): Promise<HousekeepingService> {
+  if (!service) {
+    const producer = { publish: async () => {}, close: async () => {} }
+    ;(async () => {
+      try {
+        const kafka = createKafkaClient({ clientId: 'housekeeping-service', brokers: config.KAFKA_BROKERS.split(',') })
+        Object.assign(producer, await createProducer(kafka))
+      } catch { /* Kafka unavailable — events silently dropped */ }
+    })()
+    service = new HousekeepingService(new TaskRepository(getPool()), producer)
+  }
   return service
 }
 

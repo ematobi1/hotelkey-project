@@ -5,16 +5,19 @@ import { getPool } from '../db/client'
 import { createKafkaClient, createProducer } from '@hotel-key/kafka'
 import { config } from '../config'
 
-async function buildService() {
-  const kafka = createKafkaClient({ clientId: 'billing-service', brokers: config.KAFKA_BROKERS.split(',') })
-  const producer = await createProducer(kafka)
-  const pool = getPool()
-  return new BillingService(new FolioRepository(pool), producer, pool, config.STRIPE_SECRET_KEY)
-}
-
 let service: BillingService | null = null
-async function getService() {
-  if (!service) service = await buildService()
+async function getService(): Promise<BillingService> {
+  if (!service) {
+    const producer = { publish: async () => {}, close: async () => {} }
+    ;(async () => {
+      try {
+        const kafka = createKafkaClient({ clientId: 'billing-service', brokers: config.KAFKA_BROKERS.split(',') })
+        Object.assign(producer, await createProducer(kafka))
+      } catch { /* Kafka unavailable — events silently dropped */ }
+    })()
+    const pool = getPool()
+    service = new BillingService(new FolioRepository(pool), producer, pool, config.STRIPE_SECRET_KEY)
+  }
   return service
 }
 

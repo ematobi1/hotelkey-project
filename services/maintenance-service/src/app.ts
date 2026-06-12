@@ -60,21 +60,28 @@ export async function createApp(): Promise<FastifyInstance> {
 
   app.addHook('onReady', async () => {
     const jobLogger = createLogger({ service: 'maintenance-service', level: config.LOG_LEVEL })
-    const kafka = createKafkaClient({
-      clientId: 'maintenance-service-job',
-      brokers: config.KAFKA_BROKERS.split(','),
-    })
-    const producer = await createProducer(kafka)
-    const jobService = new MaintenanceService(new WorkOrderRepository(getPool()), producer)
+    // Fire-and-forget: don't block onReady (and therefore app.listen) waiting for Kafka
+    ;(async () => {
+      try {
+        const kafka = createKafkaClient({
+          clientId: 'maintenance-service-job',
+          brokers: config.KAFKA_BROKERS.split(','),
+        })
+        const producer = await createProducer(kafka)
+        const jobService = new MaintenanceService(new WorkOrderRepository(getPool()), producer)
 
-    runFailurePredictionJob(jobService, jobLogger).catch((err) =>
-      jobLogger.error({ err }, 'Failure prediction job error on startup'),
-    )
-    setInterval(() => {
-      runFailurePredictionJob(jobService, jobLogger).catch((err) =>
-        jobLogger.error({ err }, 'Failure prediction job error'),
-      )
-    }, 86_400_000)
+        runFailurePredictionJob(jobService, jobLogger).catch((err) =>
+          jobLogger.error({ err }, 'Failure prediction job error on startup'),
+        )
+        setInterval(() => {
+          runFailurePredictionJob(jobService, jobLogger).catch((err) =>
+            jobLogger.error({ err }, 'Failure prediction job error'),
+          )
+        }, 86_400_000)
+      } catch (err) {
+        jobLogger.warn({ err }, 'Kafka unavailable — failure prediction job disabled')
+      }
+    })()
   })
 
   return app
