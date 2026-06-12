@@ -31,7 +31,7 @@ type Consumer struct {
 
 func NewConsumer(brokers []string, store *state.TwinStore) (*Consumer, error) {
 	cfg := sarama.NewConfig()
-	cfg.Consumer.Group.Rebalance.Strategy = sarama.NewBalanceStrategyRoundRobin()
+	cfg.Consumer.Group.Rebalance.Strategy = sarama.BalanceStrategyRoundRobin
 	cfg.Consumer.Offsets.Initial = sarama.OffsetNewest
 	cg, err := sarama.NewConsumerGroup(brokers, "digital-twin-consumer", cfg)
 	if err != nil {

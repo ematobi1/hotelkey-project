@@ -6,18 +6,18 @@ import { createKafkaClient, createProducer } from '@hotel-key/kafka'
 import { config } from '../config'
 import type { WorkOrderStatus, WorkOrderPriority, WorkOrderCategory } from '../domain/errors'
 
-async function buildService(): Promise<MaintenanceService> {
-  const kafka = createKafkaClient({
-    clientId: 'maintenance-service',
-    brokers: config.KAFKA_BROKERS.split(','),
-  })
-  const producer = await createProducer(kafka)
-  return new MaintenanceService(new WorkOrderRepository(getPool()), producer)
-}
-
 let service: MaintenanceService | null = null
 async function getService(): Promise<MaintenanceService> {
-  if (!service) service = await buildService()
+  if (!service) {
+    const producer = { publish: async () => {}, close: async () => {} }
+    ;(async () => {
+      try {
+        const kafka = createKafkaClient({ clientId: 'maintenance-service', brokers: config.KAFKA_BROKERS.split(',') })
+        Object.assign(producer, await createProducer(kafka))
+      } catch { /* Kafka unavailable — events silently dropped */ }
+    })()
+    service = new MaintenanceService(new WorkOrderRepository(getPool()), producer)
+  }
   return service
 }
 

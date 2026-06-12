@@ -16,8 +16,10 @@ export function getPool(): Pool {
 
 export async function getMongoDB(): Promise<Db> {
   if (!mongoClient) {
-    mongoClient = new MongoClient(config.MONGODB_URL)
-    await mongoClient.connect()
+    mongoClient = new MongoClient(config.MONGODB_URL, {
+      serverSelectionTimeoutMS: 5000,
+      connectTimeoutMS: 5000,
+    })
     mongoDb = mongoClient.db()
   }
   return mongoDb!

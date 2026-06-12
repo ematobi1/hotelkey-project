@@ -15,16 +15,11 @@ async function start() {
 
   const app = await createApp(notificationService)
 
-  const kafka = createKafkaClient({
-    clientId: 'notification-service-consumer',
-    brokers: config.KAFKA_BROKERS.split(','),
-  })
-  const consumer = await createConsumer(kafka, 'notification-service')
-  await registerConsumers(consumer, notificationService, pool)
+  let consumer: Awaited<ReturnType<typeof createConsumer>> | undefined
 
   const shutdown = async (signal: string) => {
     app.log.info({ signal }, 'Shutting down')
-    await consumer.close()
+    await consumer?.close()
     await app.close()
     await closeConnections()
     process.exit(0)
@@ -38,6 +33,18 @@ async function start() {
   } catch (err) {
     app.log.error(err, 'Failed to start server')
     process.exit(1)
+  }
+
+  // Kafka init after server is listening so health checks pass immediately
+  try {
+    const kafka = createKafkaClient({
+      clientId: 'notification-service-consumer',
+      brokers: config.KAFKA_BROKERS.split(','),
+    })
+    consumer = await createConsumer(kafka, 'notification-service')
+    await registerConsumers(consumer, notificationService, pool)
+  } catch (err) {
+    app.log.warn({ err }, 'Kafka unavailable — consumers disabled')
   }
 }
 

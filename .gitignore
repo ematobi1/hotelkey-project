@@ -9,3 +9,5 @@ coverage/
 *.log
 .DS_Store
 *.pem
+apps/staff-pwa/public/sw.js
+apps/staff-pwa/public/workbox-*.js

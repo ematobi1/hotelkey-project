@@ -24,13 +24,14 @@ func main() {
 
 	store := state.NewTwinStore()
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	consumer, err := kafka.NewConsumer(cfg.KafkaBrokers, store)
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed to create kafka consumer")
+		log.Warn().Err(err).Msg("kafka unavailable — digital-twin consumer disabled")
+	} else {
+		go consumer.Run(ctx)
 	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	go consumer.Run(ctx)
 
 	router := api.NewRouter(store)
 	srv := &http.Server{

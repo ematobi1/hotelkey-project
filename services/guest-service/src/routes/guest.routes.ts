@@ -5,19 +5,18 @@ import { getPool } from '../db/client'
 import { createKafkaClient, createProducer } from '@hotel-key/kafka'
 import { config } from '../config'
 
-async function buildDeps() {
-  const kafka = createKafkaClient({
-    clientId: 'guest-service',
-    brokers: config.KAFKA_BROKERS.split(','),
-  })
-  const producer = await createProducer(kafka)
-  const guestRepo = new GuestRepository(getPool())
-  return new GuestService(guestRepo, producer)
-}
-
 let service: GuestService | null = null
-async function getService() {
-  if (!service) service = await buildDeps()
+async function getService(): Promise<GuestService> {
+  if (!service) {
+    const producer = { publish: async () => {}, close: async () => {} }
+    ;(async () => {
+      try {
+        const kafka = createKafkaClient({ clientId: 'guest-service', brokers: config.KAFKA_BROKERS.split(',') })
+        Object.assign(producer, await createProducer(kafka))
+      } catch { /* Kafka unavailable — events silently dropped */ }
+    })()
+    service = new GuestService(new GuestRepository(getPool()), producer)
+  }
   return service
 }
 

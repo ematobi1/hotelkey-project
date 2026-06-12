@@ -71,14 +71,16 @@ export async function createApp(): Promise<FastifyInstance> {
       clearInterval(retryInterval)
     })
 
-    try {
-      const consumer = await startKafkaConsumer(repo, deliveryService)
-      app.addHook('onClose', async () => {
-        await consumer.close()
+    // Connect to Kafka without blocking server startup
+    startKafkaConsumer(repo, deliveryService)
+      .then((consumer) => {
+        app.addHook('onClose', async () => {
+          await consumer.close()
+        })
       })
-    } catch (err) {
-      app.log.warn({ err }, 'Kafka consumer failed to start — webhook delivery via retry only')
-    }
+      .catch((err) => {
+        app.log.warn({ err }, 'Kafka consumer failed to start — webhook delivery via retry only')
+      })
   })
 
   return app

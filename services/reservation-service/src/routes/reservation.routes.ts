@@ -7,20 +7,20 @@ import { getPool } from '../db/client'
 import { createKafkaClient, createProducer } from '@hotel-key/kafka'
 import { config } from '../config'
 
-async function buildService() {
-  const kafka = createKafkaClient({
-    clientId: 'reservation-service',
-    brokers: config.KAFKA_BROKERS.split(','),
-  })
-  const producer = await createProducer(kafka)
-  const redis = new Redis(config.REDIS_URL)
-  const redlock = new Redlock([redis], { retryCount: 3, retryDelay: 200 })
-  return new ReservationService(new ReservationRepository(getPool()), producer, redlock)
-}
-
 let service: ReservationService | null = null
-async function getService() {
-  if (!service) service = await buildService()
+async function getService(): Promise<ReservationService> {
+  if (!service) {
+    const producer = { publish: async () => {}, close: async () => {} }
+    ;(async () => {
+      try {
+        const kafka = createKafkaClient({ clientId: 'reservation-service', brokers: config.KAFKA_BROKERS.split(',') })
+        Object.assign(producer, await createProducer(kafka))
+      } catch { /* Kafka unavailable — events silently dropped */ }
+    })()
+    const redis = new Redis(config.REDIS_URL)
+    const redlock = new Redlock([redis], { retryCount: 3, retryDelay: 200 })
+    service = new ReservationService(new ReservationRepository(getPool()), producer, redlock)
+  }
   return service
 }
 

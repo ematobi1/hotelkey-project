@@ -1,9 +1,9 @@
 FROM golang:1.22-alpine AS builder
 WORKDIR /app
-COPY go.mod go.sum ./
+COPY services/digital-twin-service/go.mod services/digital-twin-service/go.sum ./
 RUN go mod download
-COPY . .
-RUN go build -o digital-twin-service ./cmd/server/
+COPY services/digital-twin-service/ .
+RUN go mod tidy && go build -o digital-twin-service ./cmd/server/
 
 FROM alpine:3.19
 RUN apk --no-cache add ca-certificates
