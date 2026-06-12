@@ -1,8 +1,8 @@
 FROM golang:1.22-alpine AS builder
 WORKDIR /app
-COPY services/digital-twin-service/go.mod services/digital-twin-service/go.sum ./
+COPY go.mod go.sum ./
 RUN go mod download
-COPY services/digital-twin-service/ .
+COPY . .
 RUN go mod tidy && go build -o digital-twin-service ./cmd/server/
 
 FROM alpine:3.19
