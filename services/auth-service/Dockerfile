@@ -1,7 +1,7 @@
 FROM node:22-alpine AS builder
 ENV CI=true
 WORKDIR /app
-RUN npm install -g pnpm && npm cache clean --force
+RUN apk add --no-cache python3 make g++ && npm install -g pnpm && npm cache clean --force
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 COPY packages ./packages
 COPY services/auth-service ./services/auth-service
