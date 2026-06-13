@@ -58,3 +58,32 @@ export interface StaffProfile {
   role: string
   tenantId: string
 }
+
+export interface RoomType {
+  id: string
+  name: string
+  baseRate: number
+  currencyCode: string
+  maxOccupancy: number
+}
+
+export interface AvailabilityResult {
+  roomId: string
+  roomNumber: string
+  roomTypeId: string
+  roomTypeName: string
+  floor: number
+  isAccessible: boolean
+  ratePerNight: number
+  totalAmount: number
+  currencyCode: string
+  nights: number
+}
+
+export interface Guest {
+  id: string
+  firstName: string
+  lastName: string
+  email: string | null
+  phone: string | null
+}
