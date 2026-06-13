@@ -1,0 +1,43 @@
+name: booking-engine-service
+type: Backend Service
+
+image:
+  build:
+    dockerfile: services/booking-engine-service/Dockerfile
+    context: .
+  port: 3017
+
+cpu: 256
+memory: 512
+platform: LINUX/X86_64
+count: 1
+
+variables:
+  NODE_ENV: production
+  PORT: "3017"
+  LOG_LEVEL: info
+  CART_TTL_SECONDS: "900"
+  PENDING_PAYMENT_TTL_SECONDS: "1800"
+  RATE_LIMIT_MAX: "30"
+
+secrets:
+  DATABASE_URL: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/DATABASE_URL
+  REDIS_URL: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/REDIS_URL
+  KAFKA_BROKERS: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/KAFKA_BROKERS
+  STRIPE_SECRET_KEY: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/STRIPE_SECRET_KEY
+  RESERVATION_SERVICE_URL: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/RESERVATION_SERVICE_URL
+  ROOM_SERVICE_URL: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/ROOM_SERVICE_URL
+  BILLING_SERVICE_URL: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/BILLING_SERVICE_URL
+  GUEST_SERVICE_URL: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/GUEST_SERVICE_URL
+
+http:
+  path: '/v1/booking-engine'
+  healthcheck:
+    path: '/health'
+    healthy_threshold: 2
+    unhealthy_threshold: 3
+    interval: 30s
+    timeout: 5s
+
+logging:
+  retention: 30
