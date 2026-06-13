@@ -20,7 +20,10 @@ export async function createApp(): Promise<FastifyInstance> {
   const app = Fastify({ logger: logger as FastifyBaseLogger })
 
   await app.register(helmet)
-  await app.register(cors, { origin: config.NODE_ENV === 'development' })
+  await app.register(cors, {
+    origin: ['http://localhost:3000', 'http://hotel--Publi-67crryVktJSd-2116934759.us-east-1.elb.amazonaws.com'],
+    credentials: true,
+  })
   await app.register(rateLimit, {
     max: 100,
     timeWindow: '1 minute',
