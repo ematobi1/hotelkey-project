@@ -1,0 +1,35 @@
+﻿name: digital-twin-service
+type: Load Balanced Web Service
+
+http:
+  path: '/v1/digital-twin'
+  healthcheck:
+    path: '/health'
+    healthy_threshold: 2
+    unhealthy_threshold: 3
+    interval: 30s
+    timeout: 5s
+
+image:
+  build:
+    dockerfile: services/digital-twin-service/Dockerfile
+    context: services/digital-twin-service
+  port: 4000
+
+cpu: 256
+memory: 512
+count: 1
+exec: true
+network:
+  connect: true
+
+variables:
+  PORT: '4000'
+  KAFKA_BROKERS: localhost:9092
+  LOG_LEVEL: info
+
+environments:
+  demo:
+    count: 1
+    deployment:
+      rolling: 'recreate'

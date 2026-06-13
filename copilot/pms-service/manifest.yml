@@ -1,0 +1,37 @@
+name: pms-service
+type: Load Balanced Web Service
+
+http:
+  path: '/v1/pms'
+  healthcheck:
+    path: '/health'
+    healthy_threshold: 2
+    unhealthy_threshold: 3
+    interval: 30s
+    timeout: 5s
+
+image:
+  build:
+    dockerfile: services/pms-service/Dockerfile
+    context: .
+  port: 3008
+
+cpu: 256
+memory: 512
+count: 1
+exec: true
+network:
+  connect: true
+
+variables:
+  NODE_ENV: production
+  PORT: 3008
+  HOST: 0.0.0.0
+  DATABASE_URL: postgresql://hotelkey:HotelKey2026!@hotel-key-demo.c0zq8ks60dxz.us-east-1.rds.amazonaws.com:5432/hotel_key_pms?sslmode=no-verify
+  LOG_LEVEL: info
+
+environments:
+  demo:
+    count: 1
+    deployment:
+      rolling: 'recreate'
