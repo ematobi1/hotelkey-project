@@ -5,6 +5,9 @@ import type {
   WorkOrder,
   CreateWorkOrderInput,
   StaffProfile,
+  RoomType,
+  AvailabilityResult,
+  Guest,
 } from '@/types'
 
 const BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000'
@@ -40,6 +43,40 @@ export const api = {
       apiFetch<{ data: Reservation[]; meta: { total: number } }>(
         `/v1/reservations?tenantId=${tenantId}`,
       ),
+    checkAvailability: (params: {
+      tenantId: string
+      checkInDate: string
+      checkOutDate: string
+      adults: number
+      roomTypeId?: string
+    }) => {
+      const qs = new URLSearchParams({
+        tenantId: params.tenantId,
+        checkInDate: params.checkInDate,
+        checkOutDate: params.checkOutDate,
+        adults: String(params.adults),
+      })
+      if (params.roomTypeId) qs.set('roomTypeId', params.roomTypeId)
+      return apiFetch<{ data: AvailabilityResult[]; meta: { total: number } }>(
+        `/v1/reservations/availability?${qs}`,
+      )
+    },
+    create: (payload: {
+      tenantId: string
+      guestId: string
+      roomId: string
+      checkInDate: string
+      checkOutDate: string
+      adults: number
+      ratePerNight: number
+      currencyCode: string
+      source?: string
+      specialRequests?: string
+    }) =>
+      apiFetch<{ data: Reservation }>('/v1/reservations', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }),
     checkIn: (id: string, tenantId: string) =>
       apiFetch<{ data: Reservation }>(`/v1/reservations/${id}/check-in`, {
         method: 'POST',
@@ -49,6 +86,29 @@ export const api = {
       apiFetch<{ data: Reservation }>(`/v1/reservations/${id}/check-out`, {
         method: 'POST',
         body: JSON.stringify({ tenantId }),
+      }),
+  },
+  roomTypes: {
+    list: (tenantId: string) =>
+      apiFetch<{ data: RoomType[]; meta: { total: number } }>(
+        `/v1/rooms/types?tenantId=${tenantId}`,
+      ),
+  },
+  guests: {
+    search: (tenantId: string, q: string) =>
+      apiFetch<{ data: Guest[]; meta: { total: number } }>(
+        `/v1/guests/search?tenantId=${encodeURIComponent(tenantId)}&q=${encodeURIComponent(q)}`,
+      ),
+    create: (payload: {
+      tenantId: string
+      firstName: string
+      lastName: string
+      email?: string
+      phone?: string
+    }) =>
+      apiFetch<{ data: Guest }>('/v1/guests', {
+        method: 'POST',
+        body: JSON.stringify(payload),
       }),
   },
   rooms: {
