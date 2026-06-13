@@ -1,0 +1,41 @@
+name: reservation-service
+type: Load Balanced Web Service
+
+http:
+  path: '/v1/reservations'
+  healthcheck:
+    path: '/health'
+    healthy_threshold: 2
+    unhealthy_threshold: 3
+    interval: 30s
+    timeout: 5s
+
+image:
+  build:
+    dockerfile: services/reservation-service/Dockerfile
+    context: .
+  port: 3003
+
+cpu: 256
+memory: 512
+count: 1
+exec: true
+network:
+  connect: true
+
+variables:
+  NODE_ENV: production
+  PORT: 3003
+  HOST: 0.0.0.0
+  DATABASE_URL: postgresql://hotelkey:HotelKey2026!@hotel-key-demo.c0zq8ks60dxz.us-east-1.rds.amazonaws.com:5432/hotel_key_reservation?sslmode=no-verify
+  REDIS_URL: redis://localhost:6379
+  KAFKA_BROKERS: localhost:9092
+  JWT_PUBLIC_KEY_BASE64: dGVtcC1wdWJsaWMta2V5LWZvci1kZW1v
+  ROOM_SERVICE_URL: http://room-service:3004
+  LOG_LEVEL: info
+
+environments:
+  demo:
+    count: 1
+    deployment:
+      rolling: 'recreate'

@@ -1,0 +1,40 @@
+name: lock-service
+type: Load Balanced Web Service
+
+http:
+  path: '/v1/lock'
+  healthcheck:
+    path: '/health'
+    healthy_threshold: 2
+    unhealthy_threshold: 3
+    interval: 30s
+    timeout: 5s
+
+image:
+  build:
+    dockerfile: services/lock-service/Dockerfile
+    context: .
+  port: 3010
+
+cpu: 256
+memory: 512
+count: 1
+exec: true
+network:
+  connect: true
+
+variables:
+  NODE_ENV: production
+  PORT: 3010
+  HOST: 0.0.0.0
+  DATABASE_URL: postgresql://hotelkey:HotelKey2026!@hotel-key-demo.c0zq8ks60dxz.us-east-1.rds.amazonaws.com:5432/hotel_key_lock?sslmode=no-verify
+  KAFKA_BROKERS: localhost:9092
+  ASSA_ABLOY_API_BASE_URL: https://api.assaabloy.com/demo
+  ASSA_ABLOY_API_KEY: demo-placeholder-key
+  LOG_LEVEL: info
+
+environments:
+  demo:
+    count: 1
+    deployment:
+      rolling: 'recreate'

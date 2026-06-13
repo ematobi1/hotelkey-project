@@ -1,0 +1,42 @@
+name: bi-service
+type: Load Balanced Web Service
+
+http:
+  path: '/v1/bi'
+  healthcheck:
+    path: '/health'
+    healthy_threshold: 2
+    unhealthy_threshold: 3
+    interval: 30s
+    timeout: 5s
+
+image:
+  build:
+    dockerfile: services/bi-service/Dockerfile
+    context: .
+  port: 3016
+
+cpu: 256
+memory: 512
+count: 1
+exec: true
+network:
+  connect: true
+
+variables:
+  NODE_ENV: production
+  PORT: 3016
+  HOST: 0.0.0.0
+  DATABASE_URL: postgresql://hotelkey:HotelKey2026!@hotel-key-demo.c0zq8ks60dxz.us-east-1.rds.amazonaws.com:5432/hotel_key_bi?sslmode=no-verify
+  ANTHROPIC_API_KEY: demo-placeholder-key
+  ML_SERVICE_URL: http://ml-service:8001
+  RESERVATION_SERVICE_URL: http://reservation-service:3003
+  ROOM_SERVICE_URL: http://room-service:3004
+  BILLING_SERVICE_URL: http://billing-service:3005
+  LOG_LEVEL: info
+
+environments:
+  demo:
+    count: 1
+    deployment:
+      rolling: 'recreate'

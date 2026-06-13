@@ -1,0 +1,39 @@
+name: pricing-service
+type: Load Balanced Web Service
+
+http:
+  path: '/v1/pricing'
+  healthcheck:
+    path: '/health'
+    healthy_threshold: 2
+    unhealthy_threshold: 3
+    interval: 30s
+    timeout: 5s
+
+image:
+  build:
+    dockerfile: services/pricing-service/Dockerfile
+    context: services/pricing-service
+  port: 8002
+
+cpu: 256
+memory: 512
+count: 1
+exec: true
+network:
+  connect: true
+
+variables:
+  HOST: 0.0.0.0
+  PORT: '8002'
+  LOG_LEVEL: info
+  DATABASE_URL: postgresql://hotelkey:HotelKey2026!@hotel-key-demo.c0zq8ks60dxz.us-east-1.rds.amazonaws.com:5432/hotel_key_pricing?sslmode=no-verify
+  ROOM_SERVICE_URL: http://room-service:3004
+  RESERVATION_SERVICE_URL: http://reservation-service:3003
+  BILLING_SERVICE_URL: http://billing-service:3005
+
+environments:
+  demo:
+    count: 1
+    deployment:
+      rolling: 'recreate'

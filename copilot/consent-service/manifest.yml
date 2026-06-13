@@ -1,0 +1,42 @@
+name: consent-service
+type: Load Balanced Web Service
+
+http:
+  path: '/v1/consent'
+  healthcheck:
+    path: '/health'
+    healthy_threshold: 2
+    unhealthy_threshold: 3
+    interval: 30s
+    timeout: 5s
+
+image:
+  build:
+    dockerfile: services/consent-service/Dockerfile
+    context: .
+  port: 3013
+
+cpu: 256
+memory: 512
+count: 1
+exec: true
+network:
+  connect: true
+
+variables:
+  NODE_ENV: production
+  PORT: 3013
+  HOST: 0.0.0.0
+  DATABASE_URL: postgresql://hotelkey:HotelKey2026!@hotel-key-demo.c0zq8ks60dxz.us-east-1.rds.amazonaws.com:5432/hotel_key_consent?sslmode=no-verify
+  FABRIC_GATEWAY_ENDPOINT: localhost:7051
+  FABRIC_MSP_ID: HotelKeyMSP
+  FABRIC_CERT_PATH: /tmp/demo-cert.pem
+  FABRIC_KEY_PATH: /tmp/demo-key.pem
+  FABRIC_TLS_CERT_PATH: /tmp/demo-tls-cert.pem
+  LOG_LEVEL: info
+
+environments:
+  demo:
+    count: 1
+    deployment:
+      rolling: 'recreate'

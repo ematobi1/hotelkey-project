@@ -1,0 +1,44 @@
+name: auth-service
+type: Load Balanced Web Service
+
+http:
+  path: '/'
+  healthcheck:
+    path: '/health'
+    healthy_threshold: 2
+    unhealthy_threshold: 3
+    interval: 30s
+    timeout: 5s
+
+image:
+  build:
+    dockerfile: services/auth-service/Dockerfile
+    context: .
+  port: 3001
+
+cpu: 256
+memory: 512
+count: 1
+exec: true
+network:
+  connect: true
+
+variables:
+  NODE_ENV: production
+  PORT: 3001
+  HOST: 0.0.0.0
+  DATABASE_URL: postgresql://hotelkey:HotelKey2026!@hotel-key-demo.c0zq8ks60dxz.us-east-1.rds.amazonaws.com:5432/hotel_key_auth?sslmode=no-verify
+  JWT_PRIVATE_KEY_BASE64: dGVtcC1wcml2YXRlLWtleS1mb3ItZGVtbw==
+  JWT_PUBLIC_KEY_BASE64: dGVtcC1wdWJsaWMta2V5LWZvci1kZW1v
+  JWT_ACCESS_TOKEN_TTL_SECONDS: 900
+  JWT_REFRESH_TOKEN_TTL_DAYS: 7
+  MFA_ENCRYPTION_KEY: 0000000000000000000000000000000000000000000000000000000000000000
+  KAFKA_BROKERS: localhost:9092
+  REDIS_URL: redis://localhost:6379
+  LOG_LEVEL: info
+
+environments:
+  demo:
+    count: 1
+    deployment:
+      rolling: 'recreate'

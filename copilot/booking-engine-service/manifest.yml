@@ -1,34 +1,5 @@
 name: booking-engine-service
-type: Backend Service
-
-image:
-  build:
-    dockerfile: services/booking-engine-service/Dockerfile
-    context: .
-  port: 3017
-
-cpu: 256
-memory: 512
-platform: LINUX/X86_64
-count: 1
-
-variables:
-  NODE_ENV: production
-  PORT: "3017"
-  LOG_LEVEL: info
-  CART_TTL_SECONDS: "900"
-  PENDING_PAYMENT_TTL_SECONDS: "1800"
-  RATE_LIMIT_MAX: "30"
-
-secrets:
-  DATABASE_URL: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/DATABASE_URL
-  REDIS_URL: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/REDIS_URL
-  KAFKA_BROKERS: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/KAFKA_BROKERS
-  STRIPE_SECRET_KEY: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/STRIPE_SECRET_KEY
-  RESERVATION_SERVICE_URL: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/RESERVATION_SERVICE_URL
-  ROOM_SERVICE_URL: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/ROOM_SERVICE_URL
-  BILLING_SERVICE_URL: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/BILLING_SERVICE_URL
-  GUEST_SERVICE_URL: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/GUEST_SERVICE_URL
+type: Load Balanced Web Service
 
 http:
   path: '/v1/booking-engine'
@@ -39,5 +10,37 @@ http:
     interval: 30s
     timeout: 5s
 
-logging:
-  retention: 30
+image:
+  build:
+    dockerfile: services/booking-engine-service/Dockerfile
+    context: .
+  port: 3017
+
+cpu: 256
+memory: 512
+count: 1
+exec: true
+network:
+  connect: true
+
+variables:
+  NODE_ENV: production
+  PORT: "3017"
+  HOST: 0.0.0.0
+  LOG_LEVEL: info
+  CART_TTL_SECONDS: "900"
+  PENDING_PAYMENT_TTL_SECONDS: "1800"
+  RATE_LIMIT_MAX: "30"
+  REDIS_URL: redis://localhost:6379
+  KAFKA_BROKERS: localhost:9092
+  STRIPE_SECRET_KEY: sk_test_demo_placeholder
+  RESERVATION_SERVICE_URL: http://hotel--Publi-67crryVktJSd-2116934759.us-east-1.elb.amazonaws.com
+  ROOM_SERVICE_URL: http://hotel--Publi-67crryVktJSd-2116934759.us-east-1.elb.amazonaws.com
+  BILLING_SERVICE_URL: http://hotel--Publi-67crryVktJSd-2116934759.us-east-1.elb.amazonaws.com
+  GUEST_SERVICE_URL: http://hotel--Publi-67crryVktJSd-2116934759.us-east-1.elb.amazonaws.com
+
+environments:
+  demo:
+    count: 1
+    deployment:
+      rolling: 'recreate'

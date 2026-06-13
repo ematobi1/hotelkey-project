@@ -1,0 +1,37 @@
+﻿name: ml-service
+type: Load Balanced Web Service
+
+http:
+  path: '/v1/ml'
+  healthcheck:
+    path: '/health'
+    healthy_threshold: 2
+    unhealthy_threshold: 3
+    interval: 30s
+    timeout: 5s
+
+image:
+  build:
+    dockerfile: services/ml-service/Dockerfile
+    context: services/ml-service
+  port: 8001
+
+cpu: 512
+memory: 1024
+count: 1
+exec: true
+network:
+  connect: true
+
+variables:
+  HOST: 0.0.0.0
+  PORT: '8001'
+  LOG_LEVEL: info
+  SHADOW_MODE: 'true'
+  MLFLOW_URI: 'file:///tmp/mlruns'
+
+environments:
+  demo:
+    count: 1
+    deployment:
+      rolling: 'recreate'
