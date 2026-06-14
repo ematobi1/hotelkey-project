@@ -61,25 +61,26 @@ export class ReservationRepository {
               r.is_accessible,
               r.amenities,
               rt.base_rate AS rate_per_night,
-              rt.base_rate * $3 AS total_amount,
+              rt.base_rate * $4 AS total_amount,
               rt.currency_code
          FROM room r
          JOIN room_type rt ON rt.id = r.room_type_id
         WHERE r.tenant_id = $1
           AND r.deleted_at IS NULL
           AND r.status = 'clean'
-          AND r.max_occupancy >= $4
-          AND ($5::uuid IS NULL OR r.room_type_id = $5)
-          AND ($6::boolean IS NULL OR r.is_accessible = $6)
+          AND r.max_occupancy >= $5
+          AND ($6::uuid IS NULL OR r.room_type_id = $6)
+          AND ($7::boolean IS NULL OR r.is_accessible = $7)
           AND NOT EXISTS (
             SELECT 1 FROM reservation res
              WHERE res.room_id = r.id
                AND res.status NOT IN ('cancelled', 'no_show')
-               AND res.check_in_date < $2
-               AND res.check_out_date > $1
+               AND res.check_in_date < $3
+               AND res.check_out_date > $2
           )
         ORDER BY r.floor, r.room_number`,
       [
+        query.tenantId,
         query.checkInDate,
         query.checkOutDate,
         nights,
@@ -234,6 +235,26 @@ export class ReservationRepository {
     )
     if (!rows[0]) throw new NotFoundError('Reservation', id)
     return rowToReservation(rows[0])
+  }
+
+  async findConflictedRoomIds(
+    tenantId: string,
+    roomIds: string[],
+    checkInDate: Date,
+    checkOutDate: Date,
+  ): Promise<string[]> {
+    if (roomIds.length === 0) return []
+    const { rows } = await this.pool.query<{ room_id: string }>(
+      `SELECT DISTINCT room_id
+         FROM reservation
+        WHERE tenant_id = $1
+          AND room_id = ANY($2::uuid[])
+          AND status NOT IN ('cancelled', 'no_show')
+          AND check_in_date < $4
+          AND check_out_date > $3`,
+      [tenantId, roomIds, checkInDate, checkOutDate],
+    )
+    return rows.map((r) => r.room_id)
   }
 
   getPool(): Pool {
