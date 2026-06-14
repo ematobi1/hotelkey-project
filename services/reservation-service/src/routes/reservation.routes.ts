@@ -17,9 +17,9 @@ async function getService(): Promise<ReservationService> {
         Object.assign(producer, await createProducer(kafka))
       } catch { /* Kafka unavailable — events silently dropped */ }
     })()
-    const redis = new Redis(config.REDIS_URL)
-    const redlock = new Redlock([redis], { retryCount: 3, retryDelay: 200 })
-    service = new ReservationService(new ReservationRepository(getPool()), producer, redlock)
+    const redis = new Redis(config.REDIS_URL, { enableOfflineQueue: false, connectTimeout: 2000, maxRetriesPerRequest: 0 })
+    const redlock = new Redlock([redis], { retryCount: 1, retryDelay: 100 })
+    service = new ReservationService(new ReservationRepository(getPool()), producer, redlock, config.ROOM_SERVICE_URL)
   }
   return service
 }

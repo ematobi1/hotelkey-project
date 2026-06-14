@@ -5,6 +5,8 @@ import type {
   AvailabilityQuery,
   AvailabilityResult,
   CreateReservationInput,
+  Room,
+  RoomType,
 } from '@hotel-key/types'
 import { ConflictError, BadRequestError } from '@hotel-key/types'
 import type { ReservationRepository } from '../repositories/reservation.repository'
@@ -24,13 +26,72 @@ export class ReservationService {
     private readonly reservationRepo: ReservationRepository,
     private readonly producer: HotelKeyProducer,
     private readonly redlock: Redlock,
+    private readonly roomServiceUrl: string,
   ) {}
 
   async getAvailability(query: AvailabilityQuery): Promise<AvailabilityResult[]> {
     if (query.checkInDate >= query.checkOutDate) {
       throw new BadRequestError('Check-out date must be after check-in date')
     }
-    return this.reservationRepo.findAvailableRooms(query)
+
+    const nights = Math.ceil(
+      (query.checkOutDate.getTime() - query.checkInDate.getTime()) / (1000 * 60 * 60 * 24),
+    )
+
+    const [roomsRes, typesRes] = await Promise.all([
+      fetch(`${this.roomServiceUrl}/v1/rooms?tenantId=${query.tenantId}`),
+      fetch(`${this.roomServiceUrl}/v1/rooms/types?tenantId=${query.tenantId}`),
+    ])
+
+    if (!roomsRes.ok || !typesRes.ok) {
+      throw new Error('Failed to fetch room data from room-service')
+    }
+
+    const roomsData = (await roomsRes.json()) as { data: Room[] }
+    const typesData = (await typesRes.json()) as { data: RoomType[] }
+
+    const typeMap = new Map(typesData.data.map((t) => [t.id, t]))
+
+    const minOccupancy = query.adults + (query.children ?? 0)
+    const eligible = roomsData.data.filter(
+      (r) =>
+        r.status === 'clean' &&
+        !r.deletedAt &&
+        r.maxOccupancy >= minOccupancy &&
+        (!query.roomTypeId || r.roomTypeId === query.roomTypeId) &&
+        (query.isAccessible === undefined || r.isAccessible === query.isAccessible),
+    )
+
+    if (eligible.length === 0) return []
+
+    const conflicted = await this.reservationRepo.findConflictedRoomIds(
+      query.tenantId,
+      eligible.map((r) => r.id),
+      query.checkInDate,
+      query.checkOutDate,
+    )
+    const conflictedSet = new Set(conflicted)
+
+    return eligible
+      .filter((r) => !conflictedSet.has(r.id))
+      .flatMap((r) => {
+        const roomType = typeMap.get(r.roomTypeId)
+        if (!roomType) return []
+        return [{
+          roomId: r.id,
+          roomNumber: r.roomNumber,
+          roomTypeId: r.roomTypeId,
+          roomTypeName: roomType.name,
+          floor: r.floor,
+          isAccessible: r.isAccessible,
+          amenities: r.amenities,
+          ratePerNight: roomType.baseRate,
+          totalAmount: roomType.baseRate * nights,
+          currencyCode: roomType.currencyCode,
+          nights,
+        }]
+      })
+      .sort((a, b) => a.floor - b.floor || a.roomNumber.localeCompare(b.roomNumber))
   }
 
   async createReservation(input: CreateReservationInput): Promise<Reservation> {
@@ -39,9 +100,7 @@ export class ReservationService {
     }
 
     const lockKey = `reservation:room:${input.roomId}:${input.checkInDate.toISOString()}:${input.checkOutDate.toISOString()}`
-    const lock = await this.redlock.acquire([lockKey], 10000).catch(() => {
-      throw new ConflictError('Room is temporarily unavailable — please try again')
-    })
+    const lock = await this.redlock.acquire([lockKey], 10000).catch(() => null)
 
     try {
       const pool = this.reservationRepo.getPool()
@@ -88,7 +147,7 @@ export class ReservationService {
         client.release()
       }
     } finally {
-      await lock.release()
+      await lock?.release().catch(() => {})
     }
   }
 
@@ -176,9 +235,7 @@ export class ReservationService {
 
     if (datesChanged) {
       const lockKey = `reservation:room:${existing.roomId}:${newCheckIn.toISOString()}:${newCheckOut.toISOString()}`
-      const lock = await this.redlock.acquire([lockKey], 10000).catch(() => {
-        throw new ConflictError('Room is temporarily unavailable — please try again')
-      })
+      const lock = await this.redlock.acquire([lockKey], 10000).catch(() => null)
 
       try {
         const pool = this.reservationRepo.getPool()
@@ -222,7 +279,7 @@ export class ReservationService {
           client.release()
         }
       } finally {
-        await lock.release()
+        await lock?.release().catch(() => {})
       }
     }
 

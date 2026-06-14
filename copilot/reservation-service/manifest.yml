@@ -31,7 +31,7 @@ variables:
   REDIS_URL: redis://localhost:6379
   KAFKA_BROKERS: localhost:9092
   JWT_PUBLIC_KEY_BASE64: dGVtcC1wdWJsaWMta2V5LWZvci1kZW1v
-  ROOM_SERVICE_URL: http://room-service:3004
+  ROOM_SERVICE_URL: http://hotel--Publi-67crryVktJSd-2116934759.us-east-1.elb.amazonaws.com
   LOG_LEVEL: info
 
 environments:
