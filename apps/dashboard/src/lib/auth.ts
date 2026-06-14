@@ -7,6 +7,17 @@ export function getToken(): string | null {
   return localStorage.getItem(ACCESS_TOKEN_KEY)
 }
 
+export function getUserId(): string | null {
+  const token = getToken()
+  if (!token) return null
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]!))
+    return (payload.sub as string) ?? null
+  } catch {
+    return null
+  }
+}
+
 export function getTenantId(): string | null {
   if (typeof window === 'undefined') return null
   return localStorage.getItem(TENANT_ID_KEY)

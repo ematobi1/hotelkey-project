@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { api } from '@/lib/api'
-import { getTenantId } from '@/lib/auth'
+import { getTenantId, getUserId } from '@/lib/auth'
 import type { CreateWorkOrderInput, WorkOrder } from '@/types'
 import WorkOrderList from '@/components/WorkOrderList'
 import Button from '@/components/ui/Button'
@@ -42,6 +42,12 @@ export default function MaintenancePage() {
       (form.elements.namedItem(name) as HTMLInputElement | HTMLSelectElement).value
 
     const tenantId = getTenantId() ?? ''
+    const userId = getUserId()
+    if (!userId) {
+      setFormError('Session expired — please log in again.')
+      setSubmitting(false)
+      return
+    }
     const roomId = get('roomId').trim() || undefined
 
     const input: CreateWorkOrderInput = {
@@ -50,7 +56,7 @@ export default function MaintenancePage() {
       description: get('description'),
       category: get('category'),
       priority: get('priority'),
-      reportedBy: get('reportedBy'),
+      reportedBy: userId,
       ...(roomId ? { roomId } : {}),
     }
 
@@ -158,19 +164,6 @@ export default function MaintenancePage() {
                 />
               </div>
 
-              <div>
-                <label htmlFor="reportedBy" className="block text-sm font-medium text-slate-700 mb-1">
-                  Reported by
-                </label>
-                <input
-                  id="reportedBy"
-                  name="reportedBy"
-                  type="text"
-                  required
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="Staff name or ID"
-                />
-              </div>
             </div>
 
             {formError && (
