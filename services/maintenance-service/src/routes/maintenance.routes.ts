@@ -133,6 +133,46 @@ export const maintenanceRoutes: FastifyPluginAsync = async (app) => {
 
   app.patch<{
     Params: { id: string }
+    Body: {
+      tenantId: string
+      title?: string
+      description?: string
+      category?: WorkOrderCategory
+      priority?: WorkOrderPriority
+      roomId?: string | null
+    }
+  }>(
+    '/work-orders/:id',
+    {
+      schema: {
+        params: {
+          type: 'object',
+          properties: { id: { type: 'string', format: 'uuid' } },
+        },
+        body: {
+          type: 'object',
+          required: ['tenantId'],
+          properties: {
+            tenantId: { type: 'string', format: 'uuid' },
+            title: { type: 'string', minLength: 1, maxLength: 255 },
+            description: { type: 'string' },
+            category: { type: 'string', enum: ['plumbing', 'electrical', 'hvac', 'furniture', 'cleaning', 'safety', 'other'] },
+            priority: { type: 'string', enum: ['low', 'medium', 'high', 'urgent'] },
+            roomId: { type: ['string', 'null'] },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const svc = await getService()
+      const { tenantId, ...changes } = request.body
+      const order = await svc.updateWorkOrder(request.params.id, tenantId, changes)
+      return reply.send({ data: order })
+    },
+  )
+
+  app.patch<{
+    Params: { id: string }
     Body: { staffId: string; tenantId: string }
   }>(
     '/work-orders/:id/assign',

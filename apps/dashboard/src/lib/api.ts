@@ -136,5 +136,19 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(data),
       }),
+    update: (
+      id: string,
+      tenantId: string,
+      changes: Partial<Pick<CreateWorkOrderInput, 'title' | 'description' | 'category' | 'priority'> & { roomId: string | null }>,
+    ) =>
+      apiFetch<{ data: WorkOrder }>(`/v1/maintenance/work-orders/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ tenantId, ...changes }),
+      }),
+    updateStatus: (id: string, tenantId: string, status: WorkOrder['status'], notes?: string) =>
+      apiFetch<{ data: WorkOrder }>(`/v1/maintenance/work-orders/${id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ tenantId, status, ...(notes !== undefined ? { notes } : {}) }),
+      }),
   },
 }
