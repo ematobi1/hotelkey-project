@@ -16,8 +16,8 @@ const EVENT_WORK_ORDER_UPDATED = 'hotel-key.maintenance.work_order.updated'
 const EVENT_WORK_ORDER_ASSIGNED = 'hotel-key.maintenance.work_order.assigned'
 
 const VALID_TRANSITIONS: Record<WorkOrderStatus, WorkOrderStatus[]> = {
-  open: ['cancelled'],
-  assigned: ['in_progress', 'cancelled'],
+  open: ['assigned', 'in_progress', 'completed', 'cancelled'],
+  assigned: ['in_progress', 'completed', 'cancelled'],
   in_progress: ['completed', 'cancelled'],
   completed: [],
   cancelled: [],
@@ -74,7 +74,7 @@ export class MaintenanceService {
   ): Promise<WorkOrder> {
     const existing = await this.repo.findByIdOrThrow(id, tenantId)
 
-    if (!VALID_TRANSITIONS[existing.status].includes(status)) {
+    if (existing.status !== status && !VALID_TRANSITIONS[existing.status].includes(status)) {
       throw new BadRequestError(
         `Invalid status transition from '${existing.status}' to '${status}'`,
       )
@@ -96,6 +96,21 @@ export class MaintenanceService {
     )
 
     return order
+  }
+
+  async updateWorkOrder(
+    id: string,
+    tenantId: string,
+    changes: {
+      title?: string
+      description?: string
+      category?: WorkOrder['category']
+      priority?: WorkOrder['priority']
+      roomId?: string | null
+    },
+  ): Promise<WorkOrder> {
+    await this.repo.findByIdOrThrow(id, tenantId)
+    return this.repo.update(id, tenantId, changes)
   }
 
   async listWorkOrders(filters: ListWorkOrdersFilters): Promise<WorkOrder[]> {

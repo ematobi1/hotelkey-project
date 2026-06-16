@@ -35,9 +35,17 @@ export interface WorkOrder {
   tenantId: string
   roomId: string | null
   title: string
+  description: string
   category: string
   priority: 'low' | 'medium' | 'high' | 'urgent'
   status: 'open' | 'assigned' | 'in_progress' | 'completed' | 'cancelled'
+  reportedBy: string
+  assignedTo: string | null
+  notes: string | null
+  completedAt: string | null
+  dueAt: string | null
+  createdAt: string
+  updatedAt: string
 }
 
 export interface CreateWorkOrderInput {

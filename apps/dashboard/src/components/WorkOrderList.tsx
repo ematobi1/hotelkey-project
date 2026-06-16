@@ -3,6 +3,8 @@ import Badge from '@/components/ui/Badge'
 
 interface Props {
   workOrders: WorkOrder[]
+  onEdit: (order: WorkOrder) => void
+  onSelect: (order: WorkOrder) => void
 }
 
 const priorityColor: Record<WorkOrder['priority'], 'gray' | 'blue' | 'yellow' | 'red'> = {
@@ -20,7 +22,7 @@ const statusColor: Record<WorkOrder['status'], 'blue' | 'yellow' | 'green' | 're
   cancelled: 'gray',
 }
 
-export default function WorkOrderList({ workOrders }: Props) {
+export default function WorkOrderList({ workOrders, onEdit, onSelect }: Props) {
   if (workOrders.length === 0) {
     return <p className="text-slate-400 text-sm py-6 text-center">No work orders found.</p>
   }
@@ -40,9 +42,23 @@ export default function WorkOrderList({ workOrders }: Props) {
                 {order.roomId ? ` · Room ${order.roomId}` : ''}
               </p>
             </div>
-            <div className="flex gap-2 shrink-0 flex-wrap justify-end">
+            <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
               <Badge color={priorityColor[order.priority]}>{order.priority}</Badge>
-              <Badge color={statusColor[order.status]}>{order.status.replace(/_/g, ' ')}</Badge>
+              <button
+                type="button"
+                onClick={() => onSelect(order)}
+                className="focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-full"
+                aria-label={`View details for ${order.title}`}
+              >
+                <Badge color={statusColor[order.status]}>{order.status.replace(/_/g, ' ')}</Badge>
+              </button>
+              <button
+                type="button"
+                onClick={() => onEdit(order)}
+                className="text-xs text-indigo-600 hover:text-indigo-800 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded px-1"
+              >
+                Edit
+              </button>
             </div>
           </div>
         </li>

@@ -147,6 +147,35 @@ export class WorkOrderRepository {
     }))
   }
 
+  async update(
+    id: string,
+    tenantId: string,
+    changes: {
+      title?: string
+      description?: string
+      category?: WorkOrder['category']
+      priority?: WorkOrder['priority']
+      roomId?: string | null
+    },
+  ): Promise<WorkOrder> {
+    const sets: string[] = ['updated_at = NOW()']
+    const params: unknown[] = [id, tenantId]
+    let n = 3
+
+    if (changes.title !== undefined) { sets.push(`title = $${n++}`); params.push(changes.title) }
+    if (changes.description !== undefined) { sets.push(`description = $${n++}`); params.push(changes.description) }
+    if (changes.category !== undefined) { sets.push(`category = $${n++}::work_order_category`); params.push(changes.category) }
+    if (changes.priority !== undefined) { sets.push(`priority = $${n++}::work_order_priority`); params.push(changes.priority) }
+    if (changes.roomId !== undefined) { sets.push(`room_id = $${n++}`); params.push(changes.roomId) }
+
+    const { rows } = await this.pool.query<Record<string, unknown>>(
+      `UPDATE work_order SET ${sets.join(', ')} WHERE id = $1 AND tenant_id = $2 RETURNING ${COLUMNS}`,
+      params,
+    )
+    if (!rows[0]) throw new NotFoundError('WorkOrder', id)
+    return rowToWorkOrder(rows[0])
+  }
+
   async updateStatus(
     id: string,
     tenantId: string,
