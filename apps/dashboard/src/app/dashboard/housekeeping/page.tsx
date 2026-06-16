@@ -49,21 +49,21 @@ export default function HousekeepingPage() {
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-slate-800">Housekeeping</h1>
-        <span className="text-sm text-slate-400">{tasks.length} tasks</span>
+        <h1 className="text-2xl font-bold text-slate-100">Housekeeping</h1>
+        <span className="text-sm text-slate-500">{tasks.length} tasks</span>
       </div>
 
       {!loading && !error && (
-        <div className="flex gap-1 mb-6 bg-slate-100 rounded-lg p-1 w-fit">
+        <div className="flex gap-1 mb-6 bg-slate-800/60 rounded-xl p-1 w-fit border border-slate-800">
           {filterOptions.map((opt) => (
             <button
               key={opt.value}
               type="button"
               onClick={() => setFilter(opt.value)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
                 filter === opt.value
-                  ? 'bg-white text-slate-800 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700'
+                  ? 'bg-slate-700 text-slate-100 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-300'
               }`}
             >
               {opt.label}
@@ -73,15 +73,15 @@ export default function HousekeepingPage() {
       )}
 
       {actionError && (
-        <p role="alert" className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-4 py-3">
+        <p role="alert" className="mb-4 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3">
           {actionError}
         </p>
       )}
 
-      {loading && <p className="text-slate-400 text-sm">Loading…</p>}
+      {loading && <p className="text-slate-500 text-sm">Loading…</p>}
 
       {error && !loading && (
-        <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-md px-4 py-3">
+        <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3">
           Failed to load tasks: {error}
         </p>
       )}

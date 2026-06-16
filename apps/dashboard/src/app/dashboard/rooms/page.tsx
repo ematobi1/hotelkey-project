@@ -43,24 +43,24 @@ export default function RoomsPage() {
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-slate-800">Rooms</h1>
-        <span className="text-sm text-slate-400">{rooms.length} total</span>
+        <h1 className="text-2xl font-bold text-slate-100">Rooms</h1>
+        <span className="text-sm text-slate-500">{rooms.length} total</span>
       </div>
 
       {!loading && !error && rooms.length > 0 && (
-        <div className="flex gap-4 flex-wrap mb-6">
+        <div className="flex gap-2 flex-wrap mb-6">
           {(Object.entries(counts) as [Room['status'], number][]).map(([status, count]) => (
-            <span key={status} className="text-xs text-slate-600 bg-slate-100 rounded px-2 py-1 capitalize">
-              {status.replace(/_/g, ' ')}: <strong>{count}</strong>
+            <span key={status} className="text-xs text-slate-400 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1 capitalize">
+              {status.replace(/_/g, ' ')}: <strong className="text-slate-200">{count}</strong>
             </span>
           ))}
         </div>
       )}
 
-      {loading && <p className="text-slate-400 text-sm">Loading…</p>}
+      {loading && <p className="text-slate-500 text-sm">Loading…</p>}
 
       {error && !loading && (
-        <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-md px-4 py-3">
+        <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3">
           Failed to load rooms: {error}
         </p>
       )}

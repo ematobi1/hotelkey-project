@@ -38,18 +38,21 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4">
+    <main className="min-h-screen flex items-center justify-center px-4 bg-slate-950 bg-[radial-gradient(ellipse_at_top,_#0d1a2e_0%,_#020617_65%)]">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold text-slate-800">Hotel Key</h1>
-          <p className="text-slate-500 mt-1 text-sm">Sign in to the front-desk dashboard</p>
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-cyan-500 mb-4 shadow-lg shadow-cyan-500/20">
+            <span className="text-slate-900 text-base font-bold tracking-tight select-none">HK</span>
+          </div>
+          <h1 className="text-2xl font-bold text-slate-100">Hotel Key</h1>
+          <p className="text-slate-500 mt-1 text-sm">Sign in to the management dashboard</p>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+        <div className="bg-slate-900 rounded-2xl border border-slate-800 p-7 shadow-2xl shadow-black/40">
           <form onSubmit={handleSubmit} noValidate>
             <div className="space-y-4">
               <div>
-                <label htmlFor="tenantId" className="block text-sm font-medium text-slate-700 mb-1">
+                <label htmlFor="tenantId" className="block text-xs font-medium text-slate-400 mb-1.5">
                   Property ID
                 </label>
                 <input
@@ -58,13 +61,13 @@ export default function LoginPage() {
                   type="text"
                   required
                   autoComplete="organization"
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 transition-colors"
                   placeholder="10000000-0000-0000-0000-000000000001"
                 />
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
+                <label htmlFor="email" className="block text-xs font-medium text-slate-400 mb-1.5">
                   Email address
                 </label>
                 <input
@@ -73,13 +76,13 @@ export default function LoginPage() {
                   type="email"
                   required
                   autoComplete="email"
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 transition-colors"
                   placeholder="staff@hotel.com"
                 />
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1">
+                <label htmlFor="password" className="block text-xs font-medium text-slate-400 mb-1.5">
                   Password
                 </label>
                 <input
@@ -88,13 +91,13 @@ export default function LoginPage() {
                   type="password"
                   required
                   autoComplete="current-password"
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 transition-colors"
                 />
               </div>
             </div>
 
             {error && (
-              <p role="alert" className="mt-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+              <p role="alert" className="mt-4 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
                 {error}
               </p>
             )}
@@ -102,7 +105,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="mt-6 w-full rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="mt-6 w-full rounded-lg bg-cyan-500 px-4 py-2.5 text-sm font-semibold text-slate-900 hover:bg-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               {submitting ? 'Signing in…' : 'Sign in'}
             </button>

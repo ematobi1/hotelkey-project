@@ -24,7 +24,7 @@ const statusColor: Record<WorkOrder['status'], 'blue' | 'yellow' | 'green' | 're
 
 export default function WorkOrderList({ workOrders, onEdit, onSelect }: Props) {
   if (workOrders.length === 0) {
-    return <p className="text-slate-400 text-sm py-6 text-center">No work orders found.</p>
+    return <p className="text-slate-500 text-sm py-6 text-center">No work orders found.</p>
   }
 
   return (
@@ -32,11 +32,11 @@ export default function WorkOrderList({ workOrders, onEdit, onSelect }: Props) {
       {workOrders.map((order) => (
         <li
           key={order.id}
-          className="p-4 bg-white rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"
+          className="p-4 bg-slate-900 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors"
         >
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-slate-800 text-sm">{order.title}</p>
+              <p className="font-medium text-slate-100 text-sm">{order.title}</p>
               <p className="text-xs text-slate-500 capitalize mt-1">
                 {order.category}
                 {order.roomId ? ` · Room ${order.roomId}` : ''}
@@ -47,7 +47,7 @@ export default function WorkOrderList({ workOrders, onEdit, onSelect }: Props) {
               <button
                 type="button"
                 onClick={() => onSelect(order)}
-                className="focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-full"
+                className="focus:outline-none focus:ring-2 focus:ring-cyan-500 rounded-full"
                 aria-label={`View details for ${order.title}`}
               >
                 <Badge color={statusColor[order.status]}>{order.status.replace(/_/g, ' ')}</Badge>
@@ -55,7 +55,7 @@ export default function WorkOrderList({ workOrders, onEdit, onSelect }: Props) {
               <button
                 type="button"
                 onClick={() => onEdit(order)}
-                className="text-xs text-indigo-600 hover:text-indigo-800 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded px-1"
+                className="text-xs text-cyan-400 hover:text-cyan-300 font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 rounded px-1 transition-colors"
               >
                 Edit
               </button>
