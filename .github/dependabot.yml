@@ -1,0 +1,18 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }
+    groups:
+      actions: { patterns: ["*"] }
+
+  - package-ecosystem: gomod
+    directories: ["/services/*"]
+    schedule: { interval: weekly }
+    groups:
+      golang-x: { patterns: ["golang.org/x/*"] }
+      go-deps: { patterns: ["*"], update-types: [minor, patch] }
+
+  - package-ecosystem: docker
+    directories: ["/services/*"]
+    schedule: { interval: weekly }
