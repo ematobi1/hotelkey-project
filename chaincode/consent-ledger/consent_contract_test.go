@@ -6,6 +6,7 @@ import (
 
 	"github.com/hyperledger/fabric-chaincode-go/shimtest"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
+	"github.com/hyperledger/fabric-protos-go/peer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -48,8 +49,7 @@ func TestGrantConsent_success(t *testing.T) {
 	assert.Equal(t, "granted", record.Action)
 	assert.Equal(t, testGrantedBy, record.GrantedBy)
 
-	require.NotNil(t, stub.ChaincodeEvent)
-	assert.Equal(t, "consent.granted", stub.ChaincodeEvent.EventName)
+	assertLastEvent(t, stub, "consent.granted")
 }
 
 func TestRevokeConsent_removesGrant(t *testing.T) {
@@ -108,4 +108,22 @@ func TestGetConsentHistory_returnsAllEvents(t *testing.T) {
 	}
 	assert.GreaterOrEqual(t, actions["granted"], 2)
 	assert.GreaterOrEqual(t, actions["revoked"], 1)
+}
+
+// assertLastEvent drains the MockStub event channel and checks the most
+// recent chaincode event emitted by the transaction under test.
+func assertLastEvent(t *testing.T, stub *shimtest.MockStub, want string) {
+	t.Helper()
+	var last *peer.ChaincodeEvent
+	for {
+		select {
+		case ev := <-stub.ChaincodeEventsChannel:
+			last = ev
+			continue
+		default:
+		}
+		break
+	}
+	require.NotNil(t, last, "expected a chaincode event")
+	assert.Equal(t, want, last.EventName)
 }

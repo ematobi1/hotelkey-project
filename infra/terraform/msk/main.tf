@@ -4,7 +4,7 @@ resource "aws_msk_cluster" "hotel_key" {
   number_of_broker_nodes = 3
 
   broker_node_group_info {
-    instance_type = "kafka.m5.xlarge"
+    instance_type  = "kafka.m5.xlarge"
     client_subnets = var.subnet_ids
     storage_info {
       ebs_storage_info {
@@ -15,12 +15,11 @@ resource "aws_msk_cluster" "hotel_key" {
   }
 
   encryption_info {
+    encryption_at_rest_kms_key_arn = aws_kms_key.msk.arn
+
     encryption_in_transit {
       client_broker = "TLS"
       in_cluster    = true
-    }
-    encryption_at_rest {
-      data_volume_kms_key_id = aws_kms_key.msk.arn
     }
   }
 

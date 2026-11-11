@@ -14,3 +14,8 @@ apps/staff-pwa/public/workbox-*.js
 .next/
 logs/
 scripts/create-databases.mjs
+
+# Build caches
+*.tsbuildinfo
+__pycache__/
+*.py[cod]
