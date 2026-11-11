@@ -10,9 +10,21 @@ def test_floor_rate_enforced():
 
 
 def test_ceiling_rate_enforced():
-    rate, violations = RateGuardrails.apply(600.0, 100.0, floor_rate=80.0, ceiling_rate=500.0)
+    # current=450 keeps the ceiling (500) inside the +25% daily band (562.5),
+    # so this isolates Rule 2 from Rule 3.
+    rate, violations = RateGuardrails.apply(600.0, 450.0, floor_rate=80.0, ceiling_rate=500.0)
     assert rate == 500.0
     assert any('ceiling_rate' in v for v in violations)
+    assert not any('max_daily_delta' in v for v in violations)
+
+
+def test_ceiling_then_delta_cap_both_apply():
+    # Rules apply in order: ceiling clamps 600 -> 500, then the daily delta
+    # caps the move from 100 at +25% -> 125.
+    rate, violations = RateGuardrails.apply(600.0, 100.0, floor_rate=80.0, ceiling_rate=500.0)
+    assert rate == 125.0
+    assert any('ceiling_rate' in v for v in violations)
+    assert any('max_daily_delta' in v for v in violations)
 
 
 def test_max_daily_delta_capped():

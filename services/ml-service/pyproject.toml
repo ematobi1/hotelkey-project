@@ -2,6 +2,8 @@
 name = "hotel-key-ml-service"
 version = "0.1.0"
 description = "Hotel Key ML prediction service"
+# Application, not a library: dependencies only, nothing to build or install.
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.11"
